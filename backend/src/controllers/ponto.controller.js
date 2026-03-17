@@ -224,7 +224,7 @@ exports.registroManual = async (req, res) => {
     const dataLocal = new Date(anoD, mesD - 1, diaD, 0, 0, 0);
     const dataStr = data; // já está no formato yyyy-MM-dd
 
-    const pontoData: any = {
+    const pontoData = {
       funcionarioId,
       data: dataLocal,
       observacao: observacao || null,
