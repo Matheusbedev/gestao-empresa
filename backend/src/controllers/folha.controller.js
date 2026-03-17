@@ -85,11 +85,18 @@ exports.gerarFolha = async (req, res) => {
       const totalFaltas = faltas.length;
 
       const salarioBase = parseFloat(func.salarioBase);
-      const valorHoraNormal = salarioBase / 220;
+      const valorHora = salarioBase / 220;
 
-      // Horas extras: até 2h/dia = 50%, acima = 100%
-      const horasExtras50 = Math.min(totalHorasExtras, totalHorasExtras) * valorHoraNormal * 0.5;
-      const horasExtras100 = 0; // simplificado
+      // H.E. 50% = primeiras 2h extras por dia somadas; H.E. 100% = acima de 2h extras por dia
+      let totalHE50 = 0, totalHE100 = 0;
+      for (const p of pontos) {
+        const extras = parseFloat(p.horasExtras || 0);
+        totalHE50 += Math.min(extras, 2);
+        totalHE100 += Math.max(0, extras - 2);
+      }
+
+      const horasExtras50 = totalHE50 * valorHora * 0.5;
+      const horasExtras100 = totalHE100 * valorHora * 1.0;
 
       const descontoFaltas = totalFaltas * (salarioBase / 30);
       const valeTransporte = parseFloat(func.valeTransporte);

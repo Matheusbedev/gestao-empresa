@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Plus, Loader2, Eye, EyeOff, Key, User,
-  Mail, Phone, Instagram, Code2, Trash2, Edit2, RefreshCw, AlertCircle
+  Mail, Phone, Instagram, Code2, Trash2, Edit2, RefreshCw, AlertCircle, Clock
 } from 'lucide-react';
 import clsx from 'clsx';
 import { validateEmail } from '@/lib/masks';
@@ -44,7 +44,19 @@ export default function ConfiguracoesPage() {
   const [showSenha, setShowSenha] = useState(false);
   const [editando, setEditando] = useState<Usuario | null>(null);
   const [confirmRemover, setConfirmRemover] = useState<Usuario | null>(null);
+  const [cargaHoraria, setCargaHoraria] = useState('8');
   const { register, handleSubmit, reset, setValue, formState: { isSubmitting, errors } } = useForm();
+
+  useEffect(() => {
+    const saved = localStorage.getItem('cargaHoraria');
+    if (saved) setCargaHoraria(saved);
+  }, []);
+
+  const salvarCarga = (v: string) => {
+    setCargaHoraria(v);
+    localStorage.setItem('cargaHoraria', v);
+    toast.success('Carga horária atualizada.');
+  };
 
   const carregar = async () => {
     setLoading(true);
@@ -228,6 +240,44 @@ export default function ConfiguracoesPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Carga Horária da Empresa */}
+        <div className="card">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+              <Clock className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm">Carga Horária da Empresa</h3>
+              <p className="text-xs text-gray-400">Define o padrão de horas diárias para todos os funcionários</p>
+            </div>
+          </div>
+          <div className="flex items-end gap-4 flex-wrap">
+            <div>
+              <label className="label">Horas por dia</label>
+              <select
+                className="input w-40"
+                value={cargaHoraria}
+                onChange={e => salvarCarga(e.target.value)}
+              >
+                {[4, 5, 6, 7, 8, 9, 10].map(h => (
+                  <option key={h} value={h}>{h} horas por dia</option>
+                ))}
+              </select>
+            </div>
+            <div className="pb-0.5">
+              <p className="text-xs text-gray-400 leading-relaxed">
+                H.E. 50% é calculada nas primeiras 2h extras por dia.<br />
+                H.E. 100% é calculada acima de 2h extras por dia.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/20">
+            <p className="text-xs text-blue-600 dark:text-blue-400">
+              Esta configuração é salva no seu navegador e aplicada automaticamente na página de Ponto.
+            </p>
           </div>
         </div>
 
