@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Shield, Plus, Loader2, Eye, EyeOff, Key, User,
-  Mail, Phone, Instagram, Code2, Trash2, Edit2, RefreshCw, AlertCircle, Clock
+  Mail, Phone, Instagram, Code2, Trash2, Edit2, RefreshCw, AlertCircle, Clock, Calendar, Globe, MapPin, Flag
 } from 'lucide-react';
 import clsx from 'clsx';
 import { validateEmail } from '@/lib/masks';
@@ -292,6 +292,77 @@ export default function ConfiguracoesPage() {
               <p className="text-sm text-amber-600 dark:text-amber-300 mt-0.5 font-mono">admin@empresa.com · admin123</p>
               <p className="text-xs text-amber-500 mt-1.5">Recomendamos criar um novo acesso e não utilizar as credenciais padrão em produção.</p>
             </div>
+          </div>
+        </div>
+
+        {/* Calendário de Feriados 2026 — Cambé/PR */}
+        <div className="card">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm">Feriados 2026 — Cambé, Paraná</h3>
+              <p className="text-xs text-gray-400">Datas usadas automaticamente no cálculo de H.E. 100%</p>
+            </div>
+          </div>
+
+          {/* Legenda */}
+          <div className="flex flex-wrap gap-3 mb-4">
+            {[
+              { label: 'Nacional', color: 'bg-blue-500', icon: Globe },
+              { label: 'Estadual/Regional', color: 'bg-purple-500', icon: Flag },
+              { label: 'Municipal (Cambé)', color: 'bg-emerald-500', icon: MapPin },
+            ].map(({ label, color, icon: Icon }) => (
+              <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                <span className={clsx('w-2 h-2 rounded-full', color)} />
+                {label}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {[
+              { data: '01/01', nome: 'Confraternização Universal',    tipo: 'nacional' },
+              { data: '16/02', nome: 'Carnaval — Segunda-feira',      tipo: 'nacional' },
+              { data: '17/02', nome: 'Carnaval — Terça-feira',        tipo: 'nacional' },
+              { data: '18/02', nome: 'Quarta de Cinzas (meio dia)',    tipo: 'nacional' },
+              { data: '03/04', nome: 'Sexta-feira Santa',             tipo: 'nacional' },
+              { data: '05/04', nome: 'Páscoa',                        tipo: 'nacional' },
+              { data: '21/04', nome: 'Tiradentes',                    tipo: 'nacional' },
+              { data: '01/05', nome: 'Dia do Trabalho',               tipo: 'nacional' },
+              { data: '04/06', nome: 'Corpus Christi',                tipo: 'nacional' },
+              { data: '09/07', nome: 'Revolução Constitucionalista',  tipo: 'estadual' },
+              { data: '07/09', nome: 'Independência do Brasil',       tipo: 'nacional' },
+              { data: '12/10', nome: 'Nossa Sra. Aparecida',          tipo: 'nacional' },
+              { data: '28/10', nome: 'Aniversário de Cambé',          tipo: 'municipal' },
+              { data: '02/11', nome: 'Finados',                       tipo: 'nacional' },
+              { data: '15/11', nome: 'Proclamação da República',      tipo: 'nacional' },
+              { data: '20/11', nome: 'Consciência Negra',             tipo: 'nacional' },
+              { data: '08/12', nome: 'Nossa Sra. da Conceição',       tipo: 'municipal' },
+              { data: '25/12', nome: 'Natal',                         tipo: 'nacional' },
+            ].map(({ data, nome, tipo }) => (
+              <div key={data} className={clsx(
+                'flex items-center gap-3 p-2.5 rounded-xl border text-sm',
+                tipo === 'nacional'  && 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20',
+                tipo === 'estadual'  && 'bg-purple-50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/20',
+                tipo === 'municipal' && 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20',
+              )}>
+                <span className={clsx(
+                  'text-xs font-bold font-mono px-2 py-1 rounded-lg flex-shrink-0',
+                  tipo === 'nacional'  && 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+                  tipo === 'estadual'  && 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
+                  tipo === 'municipal' && 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+                )}>{data}</span>
+                <span className="text-gray-700 dark:text-gray-300 text-xs leading-tight">{nome}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/20">
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              Nos feriados, <strong>todas as horas trabalhadas</strong> são calculadas com adicional de 100% automaticamente no ponto e na folha de pagamento.
+            </p>
           </div>
         </div>
 

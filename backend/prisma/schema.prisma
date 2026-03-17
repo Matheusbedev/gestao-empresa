@@ -37,6 +37,8 @@ model Funcionario {
   bonus         Decimal     @default(0) @db.Decimal(10, 2)
   foto          String?
   documentos    String[]
+  inicioFerias  DateTime?
+  fimFerias     DateTime?
   criadoEm     DateTime    @default(now())
   atualizadoEm DateTime    @updatedAt
 

@@ -77,6 +77,8 @@ exports.atualizar = async (req, res) => {
     if (data.valeAlimentacao) data.valeAlimentacao = parseFloat(data.valeAlimentacao);
     if (data.bonus) data.bonus = parseFloat(data.bonus);
     if (data.dataAdmissao) data.dataAdmissao = new Date(data.dataAdmissao);
+    data.inicioFerias = data.inicioFerias ? new Date(data.inicioFerias) : null;
+    data.fimFerias    = data.fimFerias    ? new Date(data.fimFerias)    : null;
 
     const funcionario = await prisma.funcionario.update({
       where: { id: req.params.id },
@@ -98,6 +100,27 @@ exports.deletar = async (req, res) => {
     res.json({ message: 'Funcionário desativado com sucesso' });
   } catch {
     res.status(500).json({ error: 'Erro ao deletar funcionário' });
+  }
+};
+
+exports.reativar = async (req, res) => {
+  try {
+    await prisma.funcionario.update({
+      where: { id: req.params.id },
+      data: { status: 'ATIVO' },
+    });
+    res.json({ message: 'Funcionário reativado com sucesso' });
+  } catch {
+    res.status(500).json({ error: 'Erro ao reativar funcionário' });
+  }
+};
+
+exports.excluirPermanente = async (req, res) => {
+  try {
+    await prisma.funcionario.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Funcionário excluído permanentemente' });
+  } catch {
+    res.status(500).json({ error: 'Erro ao excluir funcionário' });
   }
 };
 

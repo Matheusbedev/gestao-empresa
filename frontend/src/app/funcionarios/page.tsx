@@ -3,27 +3,25 @@ import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Search, Edit2, Trash2, Eye, Filter, Loader2, Users, UserCheck, UserX } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Filter, Loader2, Users, UserCheck, UserX, RotateCcw, AlertTriangle, Palmtree } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
 import FuncionarioModal from '@/components/FuncionarioModal';
 import { useAuth } from '@/contexts/AuthContext';
 
-function ConfirmModal({ open, nome, onConfirm, onCancel }: { open: boolean; nome: string; onConfirm: () => void; onCancel: () => void }) {
+function ConfirmModal({ open, titulo, mensagem, confirmLabel, confirmClass, onConfirm, onCancel, icon: Icon }: any) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-6 animate-scale-in">
-        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Trash2 className="w-5 h-5 text-red-600" />
+        <div className={clsx('w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4', confirmClass === 'btn-danger' ? 'bg-red-100 dark:bg-red-900/20' : 'bg-emerald-100 dark:bg-emerald-900/20')}>
+          <Icon className={clsx('w-5 h-5', confirmClass === 'btn-danger' ? 'text-red-600' : 'text-emerald-600')} />
         </div>
-        <h3 className="font-bold text-gray-900 dark:text-white text-center mb-1">Desativar funcionário</h3>
-        <p className="text-sm text-gray-500 text-center mb-6">
-          Tem certeza que deseja desativar <strong>{nome}</strong>? O registro será mantido no sistema.
-        </p>
+        <h3 className="font-bold text-gray-900 dark:text-white text-center mb-1">{titulo}</h3>
+        <p className="text-sm text-gray-500 text-center mb-6" dangerouslySetInnerHTML={{ __html: mensagem }} />
         <div className="flex gap-3">
           <button onClick={onCancel} className="btn-secondary flex-1 justify-center">Cancelar</button>
-          <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all flex-1 justify-center flex items-center gap-2">Desativar</button>
+          <button onClick={onConfirm} className={clsx(confirmClass, 'flex-1 justify-center flex items-center gap-2')}>{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -31,11 +29,13 @@ function ConfirmModal({ open, nome, onConfirm, onCancel }: { open: boolean; nome
 }
 
 const statusConfig: Record<string, { label: string; class: string }> = {
-  ATIVO: { label: 'Ativo', class: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  INATIVO: { label: 'Inativo', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
-  FERIAS: { label: 'Férias', class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  AFASTADO: { label: 'Afastado', class: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  ATIVO:    { label: 'Ativo',     class: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  INATIVO:  { label: 'Inativo',   class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+  FERIAS:   { label: 'Férias',    class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  AFASTADO: { label: 'Afastado',  class: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
 };
+
+const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString('pt-BR') : '';
 
 export default function FuncionariosPage() {
   const [funcionarios, setFuncionarios] = useState<any[]>([]);
@@ -47,7 +47,7 @@ export default function FuncionariosPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<any>(null);
-  const [confirmDesativar, setConfirmDesativar] = useState<any>(null);
+  const [confirm, setConfirm] = useState<any>(null);
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
 
@@ -65,17 +65,51 @@ export default function FuncionariosPage() {
 
   useEffect(() => { carregar(); }, [page, busca, status]);
 
-  const handleDelete = async (id: string) => {
+  const handleDesativar = (f: any) => setConfirm({
+    titulo: 'Desativar funcionário',
+    mensagem: `Tem certeza que deseja desativar <strong>${f.nome}</strong>? O registro será mantido.`,
+    confirmLabel: 'Desativar',
+    confirmClass: 'btn-danger',
+    icon: UserX,
+    action: async () => {
+      await api.delete(`/api/funcionarios/${f.id}`);
+      toast.success('Funcionário desativado.');
+    },
+  });
+
+  const handleReativar = (f: any) => setConfirm({
+    titulo: 'Reativar funcionário',
+    mensagem: `Deseja reativar <strong>${f.nome}</strong>? O status voltará para Ativo.`,
+    confirmLabel: 'Reativar',
+    confirmClass: 'btn-success',
+    icon: RotateCcw,
+    action: async () => {
+      await api.patch(`/api/funcionarios/${f.id}/reativar`);
+      toast.success('Funcionário reativado.');
+    },
+  });
+
+  const handleExcluirPermanente = (f: any) => setConfirm({
+    titulo: 'Excluir permanentemente',
+    mensagem: `Esta ação é <strong>irreversível</strong>. Todos os dados de <strong>${f.nome}</strong> serão apagados do sistema.`,
+    confirmLabel: 'Excluir definitivamente',
+    confirmClass: 'btn-danger',
+    icon: AlertTriangle,
+    action: async () => {
+      await api.delete(`/api/funcionarios/${f.id}/permanente`);
+      toast.success('Funcionário excluído permanentemente.');
+    },
+  });
+
+  const executarConfirm = async () => {
     try {
-      await api.delete(`/api/funcionarios/${id}`);
-      toast.success('Funcionário desativado com sucesso.');
-      setConfirmDesativar(null);
+      await confirm.action();
+      setConfirm(null);
       carregar();
-    } catch { toast.error('Não foi possível desativar o funcionário.'); }
+    } catch { toast.error('Não foi possível realizar a ação.'); }
   };
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-  const ativos = funcionarios.filter(f => f.status === 'ATIVO').length;
 
   return (
     <Layout>
@@ -94,9 +128,9 @@ export default function FuncionariosPage() {
         {/* Summary cards */}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: 'Total', value: total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-            { label: 'Ativos', value: funcionarios.filter(f => f.status === 'ATIVO').length, icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-            { label: 'Inativos', value: funcionarios.filter(f => f.status !== 'ATIVO').length, icon: UserX, color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-gray-800' },
+            { label: 'Total',   value: total, icon: Users,     color: 'text-blue-600',    bg: 'bg-blue-50 dark:bg-blue-900/20' },
+            { label: 'Ativos',  value: funcionarios.filter(f => f.status === 'ATIVO').length,  icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+            { label: 'Inativos/Férias', value: funcionarios.filter(f => f.status !== 'ATIVO').length, icon: UserX, color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-gray-800' },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <div key={label} className="card py-4">
               <div className="flex items-center gap-3">
@@ -184,9 +218,16 @@ export default function FuncionariosPage() {
                       {fmt(parseFloat(f.salarioBase))}
                     </td>
                     <td className="table-cell">
-                      <span className={clsx('badge', statusConfig[f.status]?.class)}>
-                        {statusConfig[f.status]?.label}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={clsx('badge w-fit', statusConfig[f.status]?.class)}>
+                          {statusConfig[f.status]?.label}
+                        </span>
+                        {f.status === 'FERIAS' && f.inicioFerias && (
+                          <span className="text-[10px] text-blue-500 dark:text-blue-400 flex items-center gap-1">
+                            🏖️ {fmtDate(f.inicioFerias)} → {f.fimFerias ? fmtDate(f.fimFerias) : '?'}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="table-cell">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -198,9 +239,21 @@ export default function FuncionariosPage() {
                           className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-600 transition-colors" title="Editar">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        {isAdmin && (
-                          <button onClick={() => setConfirmDesativar(f)}
+                        {isAdmin && f.status === 'INATIVO' && (
+                          <button onClick={() => handleReativar(f)}
+                            className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-gray-400 hover:text-emerald-600 transition-colors" title="Reativar">
+                            <RotateCcw className="w-4 h-4" />
+                          </button>
+                        )}
+                        {isAdmin && f.status === 'ATIVO' && (
+                          <button onClick={() => handleDesativar(f)}
                             className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors" title="Desativar">
+                            <UserX className="w-4 h-4" />
+                          </button>
+                        )}
+                        {isAdmin && f.status === 'INATIVO' && (
+                          <button onClick={() => handleExcluirPermanente(f)}
+                            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-600 transition-colors" title="Excluir permanentemente">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         )}
@@ -212,7 +265,6 @@ export default function FuncionariosPage() {
             </table>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
               <p className="text-xs text-gray-400">Página {page} de {totalPages}</p>
@@ -225,16 +277,29 @@ export default function FuncionariosPage() {
             </div>
           )}
         </div>
+
+        {/* Legenda de ações */}
+        {isAdmin && (
+          <div className="flex flex-wrap gap-4 text-xs text-gray-400 dark:text-gray-600 px-1">
+            <span className="flex items-center gap-1.5"><UserX className="w-3.5 h-3.5 text-red-400" /> Desativar (ativo)</span>
+            <span className="flex items-center gap-1.5"><RotateCcw className="w-3.5 h-3.5 text-emerald-500" /> Reativar (inativo)</span>
+            <span className="flex items-center gap-1.5"><Trash2 className="w-3.5 h-3.5 text-red-600" /> Excluir permanentemente (inativo)</span>
+          </div>
+        )}
       </div>
 
       <FuncionarioModal open={modalOpen} onClose={() => setModalOpen(false)}
         funcionario={editando} onSave={() => { setModalOpen(false); carregar(); }} />
 
       <ConfirmModal
-        open={!!confirmDesativar}
-        nome={confirmDesativar?.nome || ''}
-        onConfirm={() => handleDelete(confirmDesativar?.id)}
-        onCancel={() => setConfirmDesativar(null)}
+        open={!!confirm}
+        titulo={confirm?.titulo}
+        mensagem={confirm?.mensagem}
+        confirmLabel={confirm?.confirmLabel}
+        confirmClass={confirm?.confirmClass}
+        icon={confirm?.icon || Trash2}
+        onConfirm={executarConfirm}
+        onCancel={() => setConfirm(null)}
       />
     </Layout>
   );

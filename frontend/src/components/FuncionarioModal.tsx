@@ -37,7 +37,9 @@ export default function FuncionarioModal({ open, onClose, funcionario, onSave }:
   const [va, setVa] = useState('');
   const [bonus, setBonus] = useState('');
 
+  const statusAtual = watch('status');
   const fmt = (v: any) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(v)) : '';
+  const fmtDate = (v: any) => v ? new Date(v).toISOString().split('T')[0] : '';
 
   useEffect(() => {
     if (!open) return;
@@ -49,6 +51,8 @@ export default function FuncionarioModal({ open, onClose, funcionario, onSave }:
       setVt(fmt(funcionario.valeTransporte));
       setVa(fmt(funcionario.valeAlimentacao));
       setBonus(fmt(funcionario.bonus));
+      setValue('inicioFerias', fmtDate(funcionario.inicioFerias));
+      setValue('fimFerias', fmtDate(funcionario.fimFerias));
     } else {
       reset({ status: 'ATIVO' });
       setCpfVal(''); setPhoneVal(''); setSalario(''); setVt(''); setVa(''); setBonus('');
@@ -64,6 +68,8 @@ export default function FuncionarioModal({ open, onClose, funcionario, onSave }:
       valeTransporte: parseCurrency(vt),
       valeAlimentacao: parseCurrency(va),
       bonus: parseCurrency(bonus),
+      inicioFerias: data.status === 'FERIAS' && data.inicioFerias ? data.inicioFerias : null,
+      fimFerias: data.status === 'FERIAS' && data.fimFerias ? data.fimFerias : null,
     };
     try {
       if (funcionario) {
@@ -165,6 +171,34 @@ export default function FuncionarioModal({ open, onClose, funcionario, onSave }:
                 </select>
               </Field>
             </div>
+
+            {/* Bloco de férias — aparece só quando status = FERIAS */}
+            {statusAtual === 'FERIAS' && (
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-bold text-blue-700 dark:text-blue-400">🏖️ Período de Férias</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Início das férias *" error={errors.inicioFerias?.message as string}>
+                    <input
+                      className={clsx('input', errors.inicioFerias && 'border-red-400')}
+                      type="date"
+                      {...register('inicioFerias', { required: statusAtual === 'FERIAS' ? 'Informe o início' : false })}
+                    />
+                  </Field>
+                  <Field label="Retorno previsto *" error={errors.fimFerias?.message as string}>
+                    <input
+                      className={clsx('input', errors.fimFerias && 'border-red-400')}
+                      type="date"
+                      {...register('fimFerias', { required: statusAtual === 'FERIAS' ? 'Informe o retorno' : false })}
+                    />
+                  </Field>
+                </div>
+                <p className="text-xs text-blue-500 dark:text-blue-400 mt-2">
+                  Essas datas ficam registradas no perfil do funcionário e aparecem na listagem.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="divider" />

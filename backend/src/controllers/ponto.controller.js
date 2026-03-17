@@ -2,7 +2,36 @@ const { PrismaClient } = require('@prisma/client');
 const { startOfDay, endOfDay, startOfMonth, endOfMonth, differenceInMinutes, eachDayOfInterval, isWeekend, format } = require('date-fns');
 const prisma = new PrismaClient();
 
-function calcularHoras(ponto, cargaHoraria = 8) {
+// Feriados nacionais + estaduais/municipais de Cambé-PR 2026
+const FERIADOS_2026 = new Set([
+  '2026-01-01', // Confraternização Universal
+  '2026-02-16', // Carnaval (segunda)
+  '2026-02-17', // Carnaval (terça)
+  '2026-02-18', // Quarta de Cinzas (meio dia)
+  '2026-04-03', // Sexta-feira Santa
+  '2026-04-05', // Páscoa
+  '2026-04-21', // Tiradentes
+  '2026-05-01', // Dia do Trabalho
+  '2026-06-04', // Corpus Christi
+  '2026-07-09', // Revolução Constitucionalista (SP/PR regional)
+  '2026-09-07', // Independência do Brasil
+  '2026-10-12', // Nossa Senhora Aparecida
+  '2026-10-28', // Aniversário de Cambé-PR
+  '2026-11-02', // Finados
+  '2026-11-15', // Proclamação da República
+  '2026-11-20', // Consciência Negra
+  '2026-12-08', // Nossa Senhora da Conceição (Cambé)
+  '2026-12-25', // Natal
+]);
+
+function isFeriado(dataStr) {
+  return FERIADOS_2026.has(dataStr);
+}
+
+// Regra:
+//  - Feriado: tudo que trabalhou = 100%
+//  - Dia útil: extras = sempre 50% (sem limite de 2h para virar 100%)
+function calcularHoras(ponto, cargaHoraria = 8, dataStr = null) {
   if (!ponto.entrada || !ponto.saida) return { horasTrabalhadas: 0, horasExtras: 0, horasExtras50: 0, horasExtras100: 0 };
 
   let minutos = differenceInMinutes(new Date(ponto.saida), new Date(ponto.entrada));
@@ -11,16 +40,24 @@ function calcularHoras(ponto, cargaHoraria = 8) {
   }
 
   const horasTrabalhadas = Math.max(0, minutos / 60);
-  const extras = Math.max(0, horasTrabalhadas - cargaHoraria);
-  // Até 2h extras = 50%, acima = 100%
-  const horasExtras50 = Math.min(extras, 2);
-  const horasExtras100 = Math.max(0, extras - 2);
 
+  // Se for feriado: tudo é 100%
+  if (dataStr && isFeriado(dataStr)) {
+    return {
+      horasTrabalhadas: parseFloat(horasTrabalhadas.toFixed(2)),
+      horasExtras: parseFloat(horasTrabalhadas.toFixed(2)),
+      horasExtras50: 0,
+      horasExtras100: parseFloat(horasTrabalhadas.toFixed(2)),
+    };
+  }
+
+  // Dia útil de semana: extras sempre 50% (sem escalonamento para 100%)
+  const extras = Math.max(0, horasTrabalhadas - cargaHoraria);
   return {
     horasTrabalhadas: parseFloat(horasTrabalhadas.toFixed(2)),
     horasExtras: parseFloat(extras.toFixed(2)),
-    horasExtras50: parseFloat(horasExtras50.toFixed(2)),
-    horasExtras100: parseFloat(horasExtras100.toFixed(2)),
+    horasExtras50: parseFloat(extras.toFixed(2)),
+    horasExtras100: 0,
   };
 }
 
@@ -114,7 +151,7 @@ exports.resumoMensal = async (req, res) => {
     const dias = diasUteis.map(dia => {
       const key = format(dia, 'yyyy-MM-dd');
       const ponto = pontoMap[key] || null;
-      const calc = ponto ? calcularHoras(ponto, carga) : { horasTrabalhadas: 0, horasExtras: 0, horasExtras50: 0, horasExtras100: 0 };
+      const calc = ponto ? calcularHoras(ponto, carga, key) : { horasTrabalhadas: 0, horasExtras: 0, horasExtras50: 0, horasExtras100: 0 };
       totalHoras += calc.horasTrabalhadas;
       totalExtras += calc.horasExtras;
       totalExtras50 += calc.horasExtras50;
@@ -159,7 +196,8 @@ exports.baterPonto = async (req, res) => {
     else if (tipo === 'saida') {
       updateData.saida = agora;
       const pontoAtual = { ...ponto, saida: agora };
-      const { horasTrabalhadas, horasExtras } = calcularHoras(pontoAtual);
+      const dataStr = format(hoje, 'yyyy-MM-dd');
+      const { horasTrabalhadas, horasExtras } = calcularHoras(pontoAtual, 8, dataStr);
       updateData.horasTrabalhadas = horasTrabalhadas;
       updateData.horasExtras = horasExtras;
     }
@@ -193,7 +231,8 @@ exports.registroManual = async (req, res) => {
     if (retornoAlmoco) pontoData.retornoAlmoco = new Date(retornoAlmoco);
     if (saida) {
       pontoData.saida = new Date(saida);
-      const { horasTrabalhadas, horasExtras } = calcularHoras(pontoData);
+      const dataStr = format(startOfDay(dataObj), 'yyyy-MM-dd');
+      const { horasTrabalhadas, horasExtras } = calcularHoras(pontoData, 8, dataStr);
       pontoData.horasTrabalhadas = horasTrabalhadas;
       pontoData.horasExtras = horasExtras;
     }
@@ -219,7 +258,9 @@ exports.atualizar = async (req, res) => {
     if (data.retornoAlmoco) data.retornoAlmoco = new Date(data.retornoAlmoco);
 
     if (data.entrada && data.saida) {
-      const { horasTrabalhadas, horasExtras } = calcularHoras(data);
+      const pontoExistente = await prisma.ponto.findUnique({ where: { id: req.params.id } });
+      const dataStr = pontoExistente ? format(new Date(pontoExistente.data), 'yyyy-MM-dd') : null;
+      const { horasTrabalhadas, horasExtras } = calcularHoras(data, 8, dataStr);
       data.horasTrabalhadas = horasTrabalhadas;
       data.horasExtras = horasExtras;
     }

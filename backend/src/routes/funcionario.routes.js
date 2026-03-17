@@ -33,6 +33,8 @@ router.get('/:id', ctrl.buscarPorId);
 router.post('/', upload.single('foto'), ctrl.criar);
 router.put('/:id', upload.single('foto'), ctrl.atualizar);
 router.delete('/:id', requireAdmin, ctrl.deletar);
+router.patch('/:id/reativar', requireAdmin, ctrl.reativar);
+router.delete('/:id/permanente', requireAdmin, ctrl.excluirPermanente);
 router.post('/:id/documentos', upload.array('documentos', 5), ctrl.uploadDocumentos);
 
 module.exports = router;

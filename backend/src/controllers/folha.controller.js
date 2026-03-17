@@ -1,6 +1,15 @@
 const { PrismaClient } = require('@prisma/client');
-const { startOfMonth, endOfMonth } = require('date-fns');
+const { startOfMonth, endOfMonth, format } = require('date-fns');
 const prisma = new PrismaClient();
+
+// Feriados de Cambé-PR 2026 (mesmo set do ponto.controller)
+const FERIADOS_2026 = new Set([
+  '2026-01-01','2026-02-16','2026-02-17','2026-02-18',
+  '2026-04-03','2026-04-05','2026-04-21','2026-05-01',
+  '2026-06-04','2026-07-09','2026-09-07','2026-10-12',
+  '2026-10-28','2026-11-02','2026-11-15','2026-11-20',
+  '2026-12-08','2026-12-25',
+]);
 
 // Tabela INSS simplificada 2024
 function calcularINSS(salarioBruto) {
@@ -87,12 +96,18 @@ exports.gerarFolha = async (req, res) => {
       const salarioBase = parseFloat(func.salarioBase);
       const valorHora = salarioBase / 220;
 
-      // H.E. 50% = primeiras 2h extras por dia somadas; H.E. 100% = acima de 2h extras por dia
+      // H.E.: feriado = 100% em tudo; dia útil = sempre 50%
       let totalHE50 = 0, totalHE100 = 0;
       for (const p of pontos) {
         const extras = parseFloat(p.horasExtras || 0);
-        totalHE50 += Math.min(extras, 2);
-        totalHE100 += Math.max(0, extras - 2);
+        const dataStr = format(new Date(p.data), 'yyyy-MM-dd');
+        if (FERIADOS_2026.has(dataStr)) {
+          // No feriado, horasExtras já representa tudo trabalhado (100%)
+          totalHE100 += extras;
+        } else {
+          // Dia útil: sempre 50%, sem escalonamento
+          totalHE50 += extras;
+        }
       }
 
       const horasExtras50 = totalHE50 * valorHora * 0.5;
