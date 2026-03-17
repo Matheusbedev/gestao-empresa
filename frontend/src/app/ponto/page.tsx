@@ -13,7 +13,14 @@ import clsx from 'clsx';
 import PontoManualModal from '@/components/PontoManualModal';
 
 const diasSemana: Record<string, string> = {
-  Mon: 'Seg', Tue: 'Ter', Wed: 'Qua', Thu: 'Qui', Fri: 'Sex',
+  Mon: 'Seg', Tue: 'Ter', Wed: 'Qua', Thu: 'Qui', Fri: 'Sex', Sat: 'Sáb', Sun: 'Dom',
+};
+
+const tipoDiaCfg = {
+  util:    { label: '',         rowCls: '',                                              dateCls: 'text-gray-700 dark:text-gray-300' },
+  sabado:  { label: 'Sáb',     rowCls: 'bg-purple-50/40 dark:bg-purple-900/10',         dateCls: 'text-purple-600 dark:text-purple-400' },
+  domingo: { label: 'Dom',     rowCls: 'bg-purple-50/60 dark:bg-purple-900/15',         dateCls: 'text-purple-700 dark:text-purple-300' },
+  feriado: { label: 'Feriado', rowCls: 'bg-amber-50/60 dark:bg-amber-900/10',           dateCls: 'text-amber-600 dark:text-amber-400' },
 };
 
 function fmtH(h: number) {
@@ -42,6 +49,7 @@ function toDateTime(data: string, hora: string) {
 interface DiaResumo {
   data: string;
   diaSemana: string;
+  tipoDia: 'util' | 'sabado' | 'domingo' | 'feriado';
   ponto: any;
   horasTrabalhadas: number;
   horasExtras50: number;
@@ -74,6 +82,8 @@ function LinhaEditavel({ dia, funcId, cargaHoraria, onSalvo }: {
   const hoje = format(new Date(), 'yyyy-MM-dd');
   const isHoje = dia.data === hoje;
   const temPonto = !!dia.ponto?.entrada;
+  const cfg = tipoDiaCfg[dia.tipoDia] || tipoDiaCfg.util;
+  const isFimSemanaOuFeriado = dia.tipoDia !== 'util';
 
   const salvar = async () => {
     setSalvando(true);
@@ -108,18 +118,27 @@ function LinhaEditavel({ dia, funcId, cargaHoraria, onSalvo }: {
   return (
     <tr className={clsx(
       'transition-colors group',
-      isHoje ? 'bg-blue-50/70 dark:bg-blue-900/10' : 'hover:bg-gray-50/80 dark:hover:bg-gray-800/20',
+      isHoje ? 'bg-blue-50/70 dark:bg-blue-900/10' : cfg.rowCls,
       editando && 'bg-amber-50/60 dark:bg-amber-900/10',
     )}>
       {/* Data */}
-      <td className="table-cell w-20">
+      <td className="table-cell w-24">
         <div className="flex items-center gap-1.5">
           {isHoje && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />}
           <div>
-            <p className={clsx('font-semibold text-xs', isHoje ? 'text-blue-600' : 'text-gray-700 dark:text-gray-300')}>
+            <p className={clsx('font-semibold text-xs', isHoje ? 'text-blue-600' : cfg.dateCls)}>
               {format(new Date(dia.data + 'T12:00:00'), 'dd/MM')}
             </p>
-            <p className="text-xs text-gray-400">{diasSemana[dia.diaSemana] || dia.diaSemana}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-gray-400">{diasSemana[dia.diaSemana] || dia.diaSemana}</p>
+              {cfg.label && (
+                <span className={clsx(
+                  'text-[9px] font-bold px-1 rounded',
+                  dia.tipoDia === 'feriado' && 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+                  (dia.tipoDia === 'sabado' || dia.tipoDia === 'domingo') && 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+                )}>{cfg.label}</span>
+              )}
+            </div>
           </div>
         </div>
       </td>
@@ -145,7 +164,10 @@ function LinhaEditavel({ dia, funcId, cargaHoraria, onSalvo }: {
           <td className="table-cell font-mono text-xs text-gray-600 dark:text-gray-400">{fmtTime(dia.ponto?.saida) || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
           <td className="table-cell">
             {temPonto ? (
-              <span className={clsx('font-semibold text-xs', dia.horasTrabalhadas >= parseFloat(cargaHoraria) ? 'text-emerald-600' : 'text-amber-500')}>
+              <span className={clsx('font-semibold text-xs',
+                isFimSemanaOuFeriado ? 'text-red-500' :
+                dia.horasTrabalhadas >= parseFloat(cargaHoraria) ? 'text-emerald-600' : 'text-amber-500'
+              )}>
                 {fmtH(dia.horasTrabalhadas)}
               </span>
             ) : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
@@ -362,7 +384,7 @@ function CardFuncionario({ func, mes, ano, cargaHoraria, setModalOpen, setModalF
 
               {/* Footer */}
               <div className="p-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                <p className="text-xs text-gray-400">Carga: {cargaHoraria}h/dia · H.E. 50% até 2h extras · H.E. 100% acima de 2h</p>
+                <p className="text-xs text-gray-400">Carga: {cargaHoraria}h/dia · Sáb/Dom/Feriado = 100% · Dia útil extras = 50%</p>
                 <div className="flex items-center gap-2">
                   <button onClick={carregar} className="btn-ghost text-xs py-1.5 px-2.5">
                     <RefreshCw className="w-3 h-3" /> Atualizar
@@ -482,18 +504,12 @@ export default function PontoPage() {
 
         {/* Legenda */}
         <div className="flex flex-wrap items-center gap-4 px-1 text-xs text-gray-500 dark:text-gray-400">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Horas completas
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Horas incompletas
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded bg-orange-400 inline-block" /> H.E. 50% (até 2h extras)
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded bg-red-500 inline-block" /> H.E. 100% (acima de 2h extras)
-          </span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Horas completas</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Horas incompletas</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-orange-400 inline-block" /> H.E. 50% (dia útil)</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-red-500 inline-block" /> H.E. 100% (sáb/dom/feriado)</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-purple-400 inline-block" /> Sábado / Domingo</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-amber-400 inline-block" /> Feriado</span>
         </div>
 
         {/* Lista */}

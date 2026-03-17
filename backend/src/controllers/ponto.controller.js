@@ -143,7 +143,10 @@ exports.resumoMensal = async (req, res) => {
       orderBy: { data: 'asc' },
     });
 
-    const diasUteis = eachDayOfInterval({ start: inicio, end: fim }).filter(d => !isWeekend(d));
+    // TODOS os dias do mês (incluindo sábados, domingos e feriados)
+    const todosDias = eachDayOfInterval({ start: inicio, end: fim });
+    const diasUteis = todosDias.filter(d => !isWeekend(d));
+
     // Usar UTC para mapear datas do banco (evita drift de timezone)
     const pontoMap = Object.fromEntries(
       pontos.map(p => {
@@ -155,15 +158,48 @@ exports.resumoMensal = async (req, res) => {
 
     let totalHoras = 0, totalExtras50 = 0, totalExtras100 = 0, totalExtras = 0;
 
-    const dias = diasUteis.map(dia => {
+    const dias = todosDias.map(dia => {
       const key = format(dia, 'yyyy-MM-dd');
+      const feriado = isFeriado(key);
+      const fimDeSemana = isWeekend(dia);
       const ponto = pontoMap[key] || null;
-      const calc = ponto ? calcularHoras(ponto, carga, key) : { horasTrabalhadas: 0, horasExtras: 0, horasExtras50: 0, horasExtras100: 0 };
-      totalHoras += calc.horasTrabalhadas;
-      totalExtras += calc.horasExtras;
-      totalExtras50 += calc.horasExtras50;
+
+      // Regra de cálculo por tipo de dia:
+      // - Feriado ou fim de semana com ponto: tudo 100%
+      // - Dia útil: extras 50%
+      let calc;
+      if (ponto) {
+        if (feriado || fimDeSemana) {
+          // Trabalhou em feriado/fim de semana: tudo é 100%
+          const minutos = ponto.entrada && ponto.saida
+            ? (() => {
+                let m = differenceInMinutes(new Date(ponto.saida), new Date(ponto.entrada));
+                if (ponto.saidaAlmoco && ponto.retornoAlmoco)
+                  m -= differenceInMinutes(new Date(ponto.retornoAlmoco), new Date(ponto.saidaAlmoco));
+                return Math.max(0, m);
+              })()
+            : 0;
+          const h = parseFloat((minutos / 60).toFixed(2));
+          calc = { horasTrabalhadas: h, horasExtras: h, horasExtras50: 0, horasExtras100: h };
+        } else {
+          calc = calcularHoras(ponto, carga, key);
+        }
+      } else {
+        calc = { horasTrabalhadas: 0, horasExtras: 0, horasExtras50: 0, horasExtras100: 0 };
+      }
+
+      totalHoras   += calc.horasTrabalhadas;
+      totalExtras  += calc.horasExtras;
+      totalExtras50  += calc.horasExtras50;
       totalExtras100 += calc.horasExtras100;
-      return { data: key, diaSemana: format(dia, 'EEE'), ponto, ...calc };
+
+      return {
+        data: key,
+        diaSemana: format(dia, 'EEE'),
+        tipoDia: feriado ? 'feriado' : fimDeSemana ? (format(dia, 'EEE') === 'Sat' ? 'sabado' : 'domingo') : 'util',
+        ponto,
+        ...calc,
+      };
     });
 
     res.json({
@@ -182,6 +218,7 @@ exports.resumoMensal = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Erro ao gerar resumo mensal' });
   }
 };
