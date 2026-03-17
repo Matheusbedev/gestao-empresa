@@ -1,25 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const authMiddleware = require('../middleware/auth.middleware');
+const auth = require('../middleware/auth.middleware');
 const ctrl = require('../controllers/funcionario.controller');
 
 const storage = multer.diskStorage({
   destination: 'uploads/',
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`),
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-router.use(authMiddleware);
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    cb(new Error('Tipo de arquivo não permitido. Use JPG, PNG, WEBP ou PDF.'));
+  },
+});
 
-/**
- * @swagger
- * /api/funcionarios:
- *   get:
- *     summary: Listar funcionários
- *     tags: [Funcionários]
- */
+router.use(auth);
+
 router.get('/', ctrl.listar);
 router.get('/:id', ctrl.buscarPorId);
 router.post('/', upload.single('foto'), ctrl.criar);

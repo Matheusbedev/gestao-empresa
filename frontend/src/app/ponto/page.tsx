@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Clock, Plus, CheckCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import clsx from 'clsx';
 import PontoManualModal from '@/components/PontoManualModal';
 
@@ -65,7 +66,7 @@ export default function PontoPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Controle de Ponto</h1>
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-              {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: require('date-fns/locale/pt-BR').ptBR })}
+              {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </p>
           </div>
           <button onClick={() => setModalOpen(true)} className="btn-primary">

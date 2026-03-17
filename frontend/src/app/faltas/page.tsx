@@ -50,10 +50,20 @@ export default function FaltasPage() {
   };
 
   const deletar = async (id: string) => {
-    if (!confirm('Remover esta falta?')) return;
-    await api.delete(`/api/faltas/${id}`);
-    toast.success('Falta removida');
-    carregar();
+    toast((t) => (
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-semibold">Remover esta falta?</span>
+        <button onClick={async () => {
+          toast.dismiss(t.id);
+          try {
+            await api.delete(`/api/faltas/${id}`);
+            toast.success('Falta removida com sucesso.');
+            carregar();
+          } catch { toast.error('Não foi possível remover.'); }
+        }} className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Remover</button>
+        <button onClick={() => toast.dismiss(t.id)} className="text-gray-400 text-xs px-2 py-1.5">Cancelar</button>
+      </div>
+    ), { duration: 6000 });
   };
 
   return (

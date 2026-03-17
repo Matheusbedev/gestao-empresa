@@ -5,6 +5,8 @@ const { startOfMonth, endOfMonth, format } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
 const prisma = new PrismaClient();
 
+const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(v) || 0);
+
 exports.pontoPDF = async (req, res) => {
   try {
     const { mes, ano, funcionarioId } = req.query;
@@ -91,17 +93,19 @@ exports.folhaPDF = async (req, res) => {
     doc.text(`Período: ${folha.mes}/${folha.ano}`);
     doc.moveDown();
     doc.fontSize(12).text('─'.repeat(60));
-    doc.text(`Salário Base:          R$ ${parseFloat(folha.salarioBase).toFixed(2)}`);
-    doc.text(`Horas Extras (50%):    R$ ${parseFloat(folha.horasExtras50).toFixed(2)}`);
-    doc.text(`Horas Extras (100%):   R$ ${parseFloat(folha.horasExtras100).toFixed(2)}`);
-    doc.text(`Bônus:                 R$ ${parseFloat(folha.bonus).toFixed(2)}`);
-    doc.text(`Vale Transporte:       R$ ${parseFloat(folha.valeTransporte).toFixed(2)}`);
-    doc.text(`Vale Alimentação:      R$ ${parseFloat(folha.valeAlimentacao).toFixed(2)}`);
+    doc.text(`Salário Base:          ${fmt(folha.salarioBase)}`);
+    doc.text(`Horas Extras (50%):    ${fmt(folha.horasExtras50)}`);
+    doc.text(`Horas Extras (100%):   ${fmt(folha.horasExtras100)}`);
+    doc.text(`Bônus:                 ${fmt(folha.bonus)}`);
+    doc.text(`Vale Transporte:       ${fmt(folha.valeTransporte)}`);
+    doc.text(`Vale Alimentação:      ${fmt(folha.valeAlimentacao)}`);
     doc.text('─'.repeat(60));
-    doc.text(`Desconto INSS:        -R$ ${parseFloat(folha.inss).toFixed(2)}`);
-    doc.text(`Desconto Faltas:      -R$ ${parseFloat(folha.descontoFaltas).toFixed(2)}`);
+    doc.text(`Desconto INSS:        -${fmt(folha.inss)}`);
+    doc.text(`Desconto Faltas:      -${fmt(folha.descontoFaltas)}`);
     doc.text('─'.repeat(60));
-    doc.fontSize(14).text(`SALÁRIO LÍQUIDO:       R$ ${parseFloat(folha.salarioLiquido).toFixed(2)}`);
+    doc.fontSize(12).text(`SALÁRIO LÍQUIDO:       ${fmt(folha.salarioLiquido)}`);
+    doc.moveDown();
+    doc.fontSize(9).fillColor('#888').text('Desenvolvido por Matheus Augusto · dev.matheusaugustoo@gmail.com', { align: 'center' });
 
     doc.end();
   } catch {

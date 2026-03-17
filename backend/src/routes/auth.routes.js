@@ -1,37 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const authController = require('../controllers/auth.controller');
-const authMiddleware = require('../middleware/auth.middleware');
+const ctrl = require('../controllers/auth.controller');
+const auth = require('../middleware/auth.middleware');
 
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login do usuário
- *     tags: [Auth]
- *     security: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               senha:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login realizado com sucesso
- */
-router.post('/login', [
-  body('email').isEmail().withMessage('Email inválido'),
-  body('senha').notEmpty().withMessage('Senha obrigatória'),
-], authController.login);
+const loginValidation = [
+  body('email').isEmail().normalizeEmail().withMessage('Informe um e-mail válido.'),
+  body('senha').notEmpty().withMessage('A senha é obrigatória.'),
+];
 
-router.get('/me', authMiddleware, authController.me);
-router.post('/register', authMiddleware, authController.register);
+const registerValidation = [
+  body('nome').trim().notEmpty().withMessage('O nome é obrigatório.'),
+  body('email').isEmail().normalizeEmail().withMessage('Informe um e-mail válido.'),
+  body('senha').isLength({ min: 6 }).withMessage('A senha deve ter no mínimo 6 caracteres.'),
+];
+
+const updateValidation = [
+  body('email').optional().isEmail().normalizeEmail().withMessage('Informe um e-mail válido.'),
+  body('senha').optional().isLength({ min: 6 }).withMessage('A senha deve ter no mínimo 6 caracteres.'),
+];
+
+router.post('/login', loginValidation, ctrl.login);
+router.get('/me', auth, ctrl.me);
+router.get('/usuarios', auth, ctrl.listarUsuarios);
+router.post('/register', auth, registerValidation, ctrl.register);
+router.put('/usuarios/:id', auth, updateValidation, ctrl.atualizarUsuario);
+router.delete('/usuarios/:id', auth, ctrl.removerUsuario);
 
 module.exports = router;

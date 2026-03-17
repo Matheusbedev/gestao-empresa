@@ -8,6 +8,27 @@ import Link from 'next/link';
 import clsx from 'clsx';
 import FuncionarioModal from '@/components/FuncionarioModal';
 
+function ConfirmModal({ open, nome, onConfirm, onCancel }: { open: boolean; nome: string; onConfirm: () => void; onCancel: () => void }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-6 animate-scale-in">
+        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Trash2 className="w-5 h-5 text-red-600" />
+        </div>
+        <h3 className="font-bold text-gray-900 dark:text-white text-center mb-1">Desativar funcionário</h3>
+        <p className="text-sm text-gray-500 text-center mb-6">
+          Tem certeza que deseja desativar <strong>{nome}</strong>? O registro será mantido no sistema.
+        </p>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="btn-secondary flex-1 justify-center">Cancelar</button>
+          <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all flex-1 justify-center flex items-center gap-2">Desativar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const statusConfig: Record<string, { label: string; class: string }> = {
   ATIVO: { label: 'Ativo', class: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
   INATIVO: { label: 'Inativo', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
@@ -25,6 +46,7 @@ export default function FuncionariosPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<any>(null);
+  const [confirmDesativar, setConfirmDesativar] = useState<any>(null);
 
   const carregar = async () => {
     setLoading(true);
@@ -40,13 +62,13 @@ export default function FuncionariosPage() {
 
   useEffect(() => { carregar(); }, [page, busca, status]);
 
-  const handleDelete = async (id: string, nome: string) => {
-    if (!confirm(`Desativar ${nome}?`)) return;
+  const handleDelete = async (id: string) => {
     try {
       await api.delete(`/api/funcionarios/${id}`);
-      toast.success('Funcionário desativado');
+      toast.success('Funcionário desativado com sucesso.');
+      setConfirmDesativar(null);
       carregar();
-    } catch { toast.error('Erro ao desativar'); }
+    } catch { toast.error('Não foi possível desativar o funcionário.'); }
   };
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
@@ -173,7 +195,7 @@ export default function FuncionariosPage() {
                           className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-600 transition-colors" title="Editar">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(f.id, f.nome)}
+                        <button onClick={() => setConfirmDesativar(f)}
                           className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors" title="Desativar">
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -202,6 +224,13 @@ export default function FuncionariosPage() {
 
       <FuncionarioModal open={modalOpen} onClose={() => setModalOpen(false)}
         funcionario={editando} onSave={() => { setModalOpen(false); carregar(); }} />
+
+      <ConfirmModal
+        open={!!confirmDesativar}
+        nome={confirmDesativar?.nome || ''}
+        onConfirm={() => handleDelete(confirmDesativar?.id)}
+        onCancel={() => setConfirmDesativar(null)}
+      />
     </Layout>
   );
 }
