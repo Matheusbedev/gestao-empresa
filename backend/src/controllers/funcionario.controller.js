@@ -117,9 +117,14 @@ exports.reativar = async (req, res) => {
 
 exports.excluirPermanente = async (req, res) => {
   try {
-    await prisma.funcionario.delete({ where: { id: req.params.id } });
+    const { id } = req.params;
+    // Remove registros relacionados antes de excluir o funcionário
+    await prisma.ponto.deleteMany({ where: { funcionarioId: id } });
+    await prisma.falta.deleteMany({ where: { funcionarioId: id } });
+    await prisma.folhaPagamento.deleteMany({ where: { funcionarioId: id } });
+    await prisma.funcionario.delete({ where: { id } });
     res.json({ message: 'Funcionário excluído permanentemente' });
-  } catch {
+  } catch (err) {
     res.status(500).json({ error: 'Erro ao excluir funcionário' });
   }
 };
