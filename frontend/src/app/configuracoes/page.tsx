@@ -257,20 +257,32 @@ export default function ConfiguracoesPage() {
           <div className="flex items-end gap-4 flex-wrap">
             <div>
               <label className="label">Horas por dia</label>
-              <select
-                className="input w-40"
-                value={cargaHoraria}
-                onChange={e => salvarCarga(e.target.value)}
-              >
-                {[4, 5, 6, 7, 8, 9, 10].map(h => (
-                  <option key={h} value={h}>{h} horas por dia</option>
-                ))}
-              </select>
+              <input
+                className="input w-32 font-mono text-center text-lg"
+                type="time"
+                value={(() => {
+                  const h = Math.floor(parseFloat(cargaHoraria));
+                  const m = Math.round((parseFloat(cargaHoraria) - h) * 60);
+                  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                })()}
+                onChange={e => {
+                  const [hh, mm] = e.target.value.split(':').map(Number);
+                  const decimal = hh + mm / 60;
+                  salvarCarga(decimal.toFixed(4));
+                }}
+              />
+              <p className="text-xs text-gray-400 mt-1.5">
+                {(() => {
+                  const h = Math.floor(parseFloat(cargaHoraria));
+                  const m = Math.round((parseFloat(cargaHoraria) - h) * 60);
+                  return `${h}h${m > 0 ? m.toString().padStart(2,'0') + 'min' : ''} por dia`;
+                })()}
+              </p>
             </div>
-            <div className="pb-0.5">
+            <div className="pb-5">
               <p className="text-xs text-gray-400 leading-relaxed">
-                H.E. 50% é calculada nas primeiras 2h extras por dia.<br />
-                H.E. 100% é calculada acima de 2h extras por dia.
+                Digite no formato <strong>HH:MM</strong>.<br />
+                Ex: <strong>08:48</strong> = 8 horas e 48 minutos por dia.
               </p>
             </div>
           </div>

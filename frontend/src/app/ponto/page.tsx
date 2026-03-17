@@ -28,6 +28,7 @@ function fmtTime(dt: string | null | undefined) {
   try { return format(new Date(dt), 'HH:mm'); } catch { return ''; }
 }
 
+// Converte "HH:MM" de hora + data "yyyy-MM-dd" em ISO string sem problema de timezone
 function toDateTime(data: string, hora: string) {
   if (!hora) return undefined;
   return `${data}T${hora}:00`;
@@ -440,14 +441,31 @@ export default function PontoPage() {
             </div>
             <div>
               <label className="label">
-                Carga horária da empresa
+                Carga horária/dia
                 <span className="ml-1 text-blue-500 font-normal normal-case tracking-normal">(salvo automaticamente)</span>
               </label>
-              <select className="input w-36" value={cargaHoraria} onChange={e => handleCarga(e.target.value)}>
-                {[4, 5, 6, 7, 8, 9, 10].map(h => (
-                  <option key={h} value={h}>{h}h por dia</option>
-                ))}
-              </select>
+              <input
+                className="input w-28 font-mono text-center"
+                type="time"
+                value={(() => {
+                  const h = Math.floor(parseFloat(cargaHoraria));
+                  const m = Math.round((parseFloat(cargaHoraria) - h) * 60);
+                  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                })()}
+                onChange={e => {
+                  const [hh, mm] = e.target.value.split(':').map(Number);
+                  const decimal = hh + mm / 60;
+                  handleCarga(decimal.toFixed(4));
+                }}
+                title="Ex: 08:48 = 8h48min por dia"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                {(() => {
+                  const h = Math.floor(parseFloat(cargaHoraria));
+                  const m = Math.round((parseFloat(cargaHoraria) - h) * 60);
+                  return `${h}h${m > 0 ? m.toString().padStart(2,'0') + 'min' : ''} por dia`;
+                })()}
+              </p>
             </div>
             <div className="flex-1 min-w-[180px]">
               <label className="label">Buscar funcionário</label>

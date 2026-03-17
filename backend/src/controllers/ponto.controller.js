@@ -218,33 +218,37 @@ exports.baterPonto = async (req, res) => {
 exports.registroManual = async (req, res) => {
   try {
     const { funcionarioId, data, entrada, saidaAlmoco, retornoAlmoco, saida, observacao } = req.body;
-    const dataObj = new Date(data);
 
-    const pontoData = {
+    // Parsear data como local (evita problema de timezone UTC)
+    const [anoD, mesD, diaD] = data.split('-').map(Number);
+    const dataLocal = new Date(anoD, mesD - 1, diaD, 0, 0, 0);
+    const dataStr = data; // já está no formato yyyy-MM-dd
+
+    const pontoData: any = {
       funcionarioId,
-      data: startOfDay(dataObj),
-      observacao,
+      data: dataLocal,
+      observacao: observacao || null,
     };
 
-    if (entrada) pontoData.entrada = new Date(entrada);
-    if (saidaAlmoco) pontoData.saidaAlmoco = new Date(saidaAlmoco);
+    if (entrada)       pontoData.entrada       = new Date(entrada);
+    if (saidaAlmoco)   pontoData.saidaAlmoco   = new Date(saidaAlmoco);
     if (retornoAlmoco) pontoData.retornoAlmoco = new Date(retornoAlmoco);
     if (saida) {
       pontoData.saida = new Date(saida);
-      const dataStr = format(startOfDay(dataObj), 'yyyy-MM-dd');
       const { horasTrabalhadas, horasExtras } = calcularHoras(pontoData, 8, dataStr);
       pontoData.horasTrabalhadas = horasTrabalhadas;
       pontoData.horasExtras = horasExtras;
     }
 
     const ponto = await prisma.ponto.upsert({
-      where: { funcionarioId_data: { funcionarioId, data: startOfDay(dataObj) } },
+      where: { funcionarioId_data: { funcionarioId, data: dataLocal } },
       update: pontoData,
       create: pontoData,
     });
 
     res.json(ponto);
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Erro ao registrar ponto manual' });
   }
 };
