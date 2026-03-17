@@ -23,7 +23,7 @@ services:
       JWT_SECRET: super_secret_jwt_key_2024_rh_system
       PORT: 3001
       NODE_ENV: production
-      ALLOWED_ORIGINS: http://localhost:3000
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
     ports:
       - "3001:3001"
     depends_on:

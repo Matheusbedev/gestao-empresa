@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, senha: string) => {
     const res = await api.post('/api/auth/login', { email, senha });
-    Cookies.set('token', res.data.token, { expires: 1 });
+    Cookies.set('token', res.data.token, { expires: 7 });
     setUser(res.data.usuario);
   };
 
