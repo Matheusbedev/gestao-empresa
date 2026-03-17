@@ -1,0 +1,10 @@
+node_modules/
+.env
+*.log
+logs/
+uploads/
+.next/
+dist/
+build/
+postgres_data/
+backup.sql

@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  role      Role     @default(ADMIN)
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("usuarios")
+}
+
+model Funcionario {
+  id            String      @id @default(uuid())
+  nome          String
+  cpf           String      @unique
+  email         String?     @unique
+  telefone      String?
+  cargo         String
+  departamento  String?
+  salarioBase   Decimal     @db.Decimal(10, 2)
+  dataAdmissao  DateTime
+  dataDemissao  DateTime?
+  status        StatusFuncionario @default(ATIVO)
+  valeTransporte Decimal   @default(0) @db.Decimal(10, 2)
+  valeAlimentacao Decimal  @default(0) @db.Decimal(10, 2)
+  bonus         Decimal     @default(0) @db.Decimal(10, 2)
+  foto          String?
+  documentos    String[]
+  criadoEm     DateTime    @default(now())
+  atualizadoEm DateTime    @updatedAt
+
+  pontos        Ponto[]
+  faltas        Falta[]
+  folhas        FolhaPagamento[]
+
+  @@map("funcionarios")
+}
+
+model Ponto {
+  id            String    @id @default(uuid())
+  funcionarioId String
+  data          DateTime  @db.Date
+  entrada       DateTime?
+  saidaAlmoco   DateTime?
+  retornoAlmoco DateTime?
+  saida         DateTime?
+  horasTrabalhadas Decimal? @db.Decimal(5, 2)
+  horasExtras   Decimal?  @db.Decimal(5, 2)
+  tipo          TipoPonto @default(NORMAL)
+  observacao    String?
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+
+  funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
+
+  @@unique([funcionarioId, data])
+  @@map("pontos")
+}
+
+model Falta {
+  id            String      @id @default(uuid())
+  funcionarioId String
+  data          DateTime    @db.Date
+  tipo          TipoFalta   @default(NAO_JUSTIFICADA)
+  motivo        String?
+  documento     String?
+  criadoEm     DateTime    @default(now())
+  atualizadoEm DateTime    @updatedAt
+
+  funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
+
+  @@map("faltas")
+}
+
+model FolhaPagamento {
+  id              String    @id @default(uuid())
+  funcionarioId   String
+  mes             Int
+  ano             Int
+  salarioBase     Decimal   @db.Decimal(10, 2)
+  horasExtras50   Decimal   @default(0) @db.Decimal(10, 2)
+  horasExtras100  Decimal   @default(0) @db.Decimal(10, 2)
+  descontoFaltas  Decimal   @default(0) @db.Decimal(10, 2)
+  valeTransporte  Decimal   @default(0) @db.Decimal(10, 2)
+  valeAlimentacao Decimal   @default(0) @db.Decimal(10, 2)
+  bonus           Decimal   @default(0) @db.Decimal(10, 2)
+  inss            Decimal   @default(0) @db.Decimal(10, 2)
+  salarioLiquido  Decimal   @db.Decimal(10, 2)
+  totalHorasExtras Decimal  @default(0) @db.Decimal(5, 2)
+  totalFaltas     Int       @default(0)
+  status          StatusFolha @default(PENDENTE)
+  geradoEm        DateTime  @default(now())
+  atualizadoEm    DateTime  @updatedAt
+
+  funcionario     Funcionario @relation(fields: [funcionarioId], references: [id])
+
+  @@unique([funcionarioId, mes, ano])
+  @@map("folha_pagamento")
+}
+
+enum Role {
+  ADMIN
+  GESTOR
+}
+
+enum StatusFuncionario {
+  ATIVO
+  INATIVO
+  FERIAS
+  AFASTADO
+}
+
+enum TipoPonto {
+  NORMAL
+  HOMEOFFICE
+  FERIADO
+}
+
+enum TipoFalta {
+  JUSTIFICADA
+  NAO_JUSTIFICADA
+  ATESTADO
+  FERIADO
+}
+
+enum StatusFolha {
+  PENDENTE
+  PROCESSADA
+  PAGA
+}
