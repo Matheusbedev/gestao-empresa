@@ -1,9 +1,11 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, User, AlertCircle } from 'lucide-react';
+import { maskCPF, maskPhone, maskCurrency, parseCurrency, validateEmail, validateCPF } from '@/lib/masks';
+import clsx from 'clsx';
 
 interface Props {
   open: boolean;
@@ -12,36 +14,69 @@ interface Props {
   onSave: () => void;
 }
 
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="label">{label}</label>
+      {children}
+      {error && (
+        <p className="flex items-center gap-1 text-xs text-red-500 mt-1.5">
+          <AlertCircle className="w-3 h-3" /> {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function FuncionarioModal({ open, onClose, funcionario, onSave }: Props) {
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+  const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting, errors } } = useForm();
+  const [cpfVal, setCpfVal] = useState('');
+  const [phoneVal, setPhoneVal] = useState('');
+  const [salario, setSalario] = useState('');
+  const [vt, setVt] = useState('');
+  const [va, setVa] = useState('');
+  const [bonus, setBonus] = useState('');
+
+  const fmt = (v: any) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(v)) : '';
 
   useEffect(() => {
+    if (!open) return;
     if (funcionario) {
-      reset({
-        ...funcionario,
-        dataAdmissao: funcionario.dataAdmissao?.split('T')[0],
-        salarioBase: parseFloat(funcionario.salarioBase),
-        valeTransporte: parseFloat(funcionario.valeTransporte),
-        valeAlimentacao: parseFloat(funcionario.valeAlimentacao),
-        bonus: parseFloat(funcionario.bonus),
-      });
+      reset(funcionario);
+      setCpfVal(funcionario.cpf || '');
+      setPhoneVal(funcionario.telefone || '');
+      setSalario(fmt(funcionario.salarioBase));
+      setVt(fmt(funcionario.valeTransporte));
+      setVa(fmt(funcionario.valeAlimentacao));
+      setBonus(fmt(funcionario.bonus));
     } else {
-      reset({ status: 'ATIVO', valeTransporte: 0, valeAlimentacao: 0, bonus: 0 });
+      reset({ status: 'ATIVO' });
+      setCpfVal(''); setPhoneVal(''); setSalario(''); setVt(''); setVa(''); setBonus('');
     }
-  }, [funcionario, reset]);
+  }, [funcionario, open]);
 
   const onSubmit = async (data: any) => {
+    const payload = {
+      ...data,
+      cpf: cpfVal,
+      telefone: phoneVal,
+      salarioBase: parseCurrency(salario),
+      valeTransporte: parseCurrency(vt),
+      valeAlimentacao: parseCurrency(va),
+      bonus: parseCurrency(bonus),
+    };
     try {
       if (funcionario) {
-        await api.put(`/api/funcionarios/${funcionario.id}`, data);
-        toast.success('Funcionário atualizado');
+        await api.put(`/api/funcionarios/${funcionario.id}`, payload);
+        toast.success('Funcionário atualizado com sucesso.');
       } else {
-        await api.post('/api/funcionarios', data);
-        toast.success('Funcionário criado');
+        await api.post('/api/funcionarios', payload);
+        toast.success('Funcionário cadastrado com sucesso.');
       }
       onSave();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Erro ao salvar');
+      const msg = err.response?.data?.error || 'Não foi possível salvar. Tente novamente.';
+      toast.error(msg);
     }
   };
 
@@ -49,77 +84,127 @@ export default function FuncionarioModal({ open, onClose, funcionario, onSave }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {funcionario ? 'Editar Funcionário' : 'Novo Funcionário'}
-          </h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">
-            <X className="w-5 h-5" />
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-modal w-full max-w-2xl max-h-[92vh] overflow-y-auto animate-scale-in">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+              <User className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900 dark:text-white text-sm">
+                {funcionario ? 'Editar Funcionário' : 'Novo Funcionário'}
+              </h2>
+              <p className="text-xs text-gray-400">Preencha todos os campos obrigatórios</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-colors">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <label className="label">Nome completo</label>
-              <input className="input" {...register('nome', { required: true })} placeholder="Nome do funcionário" />
-            </div>
-            <div>
-              <label className="label">CPF</label>
-              <input className="input" {...register('cpf', { required: true })} placeholder="000.000.000-00" />
-            </div>
-            <div>
-              <label className="label">Email</label>
-              <input className="input" type="email" {...register('email')} placeholder="email@empresa.com" />
-            </div>
-            <div>
-              <label className="label">Telefone</label>
-              <input className="input" {...register('telefone')} placeholder="(11) 99999-9999" />
-            </div>
-            <div>
-              <label className="label">Cargo</label>
-              <input className="input" {...register('cargo', { required: true })} placeholder="Ex: Desenvolvedor" />
-            </div>
-            <div>
-              <label className="label">Departamento</label>
-              <input className="input" {...register('departamento')} placeholder="Ex: Tecnologia" />
-            </div>
-            <div>
-              <label className="label">Data de Admissão</label>
-              <input className="input" type="date" {...register('dataAdmissao', { required: true })} />
-            </div>
-            <div>
-              <label className="label">Salário Base (R$)</label>
-              <input className="input" type="number" step="0.01" {...register('salarioBase', { required: true })} placeholder="0,00" />
-            </div>
-            <div>
-              <label className="label">Vale Transporte (R$)</label>
-              <input className="input" type="number" step="0.01" {...register('valeTransporte')} placeholder="0,00" />
-            </div>
-            <div>
-              <label className="label">Vale Alimentação (R$)</label>
-              <input className="input" type="number" step="0.01" {...register('valeAlimentacao')} placeholder="0,00" />
-            </div>
-            <div>
-              <label className="label">Bônus (R$)</label>
-              <input className="input" type="number" step="0.01" {...register('bonus')} placeholder="0,00" />
-            </div>
-            <div>
-              <label className="label">Status</label>
-              <select className="input" {...register('status')}>
-                <option value="ATIVO">Ativo</option>
-                <option value="INATIVO">Inativo</option>
-                <option value="FERIAS">Férias</option>
-                <option value="AFASTADO">Afastado</option>
-              </select>
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Dados Pessoais</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Nome completo *" error={errors.nome?.message as string}>
+                <input className={clsx('input', errors.nome && 'border-red-400 focus:ring-red-400')}
+                  {...register('nome', { required: 'Nome é obrigatório' })}
+                  placeholder="Ex: João da Silva" />
+              </Field>
+
+              <Field label="CPF *" error={errors.cpf?.message as string}>
+                <input className={clsx('input', errors.cpf && 'border-red-400')}
+                  value={cpfVal}
+                  {...register('cpf', { validate: () => validateCPF(cpfVal) })}
+                  onChange={e => { const v = maskCPF(e.target.value); setCpfVal(v); setValue('cpf', v); }}
+                  placeholder="000.000.000-00" />
+              </Field>
+
+              <Field label="Email" error={errors.email?.message as string}>
+                <input className={clsx('input', errors.email && 'border-red-400')}
+                  type="email"
+                  {...register('email', { validate: v => !v || validateEmail(v) })}
+                  placeholder="joao@empresa.com.br" />
+              </Field>
+
+              <Field label="Telefone / WhatsApp">
+                <input className="input" value={phoneVal}
+                  onChange={e => setPhoneVal(maskPhone(e.target.value))}
+                  placeholder="(00) 00000-0000" />
+              </Field>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancelar</button>
+          <div className="divider" />
+
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Dados Profissionais</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Cargo *" error={errors.cargo?.message as string}>
+                <input className={clsx('input', errors.cargo && 'border-red-400')}
+                  {...register('cargo', { required: 'Cargo é obrigatório' })}
+                  placeholder="Ex: Analista de RH" />
+              </Field>
+
+              <Field label="Departamento">
+                <input className="input" {...register('departamento')} placeholder="Ex: Recursos Humanos" />
+              </Field>
+
+              <Field label="Data de admissão *" error={errors.dataAdmissao?.message as string}>
+                <input className={clsx('input', errors.dataAdmissao && 'border-red-400')}
+                  type="date"
+                  {...register('dataAdmissao', { required: 'Data de admissão é obrigatória' })} />
+              </Field>
+
+              <Field label="Status">
+                <select className="input" {...register('status')}>
+                  <option value="ATIVO">Ativo</option>
+                  <option value="INATIVO">Inativo</option>
+                  <option value="FERIAS">Férias</option>
+                  <option value="AFASTADO">Afastado</option>
+                </select>
+              </Field>
+            </div>
+          </div>
+
+          <div className="divider" />
+
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Remuneração e Benefícios</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Salário base *" error={errors.salarioBase?.message as string}>
+                <input className="input" value={salario}
+                  {...register('salarioBase', { validate: () => parseCurrency(salario) > 0 || 'Informe o salário' })}
+                  onChange={e => { const v = maskCurrency(e.target.value); setSalario(v); setValue('salarioBase', v); }}
+                  placeholder="R$ 0,00" />
+              </Field>
+
+              <Field label="Vale Transporte">
+                <input className="input" value={vt}
+                  onChange={e => setVt(maskCurrency(e.target.value))}
+                  placeholder="R$ 0,00" />
+              </Field>
+
+              <Field label="Vale Alimentação">
+                <input className="input" value={va}
+                  onChange={e => setVa(maskCurrency(e.target.value))}
+                  placeholder="R$ 0,00" />
+              </Field>
+
+              <Field label="Bônus mensal">
+                <input className="input" value={bonus}
+                  onChange={e => setBonus(maskCurrency(e.target.value))}
+                  placeholder="R$ 0,00" />
+              </Field>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">
+              Cancelar
+            </button>
             <button type="submit" disabled={isSubmitting} className="btn-primary flex-1 justify-center">
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+              {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar funcionário'}
             </button>
           </div>
         </form>

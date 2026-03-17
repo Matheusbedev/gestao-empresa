@@ -25,10 +25,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, senha);
-      toast.success('Acesso autorizado');
+      toast.success('Acesso autorizado. Bem-vindo!');
       router.push('/dashboard');
     } catch {
-      toast.error('Credenciais inválidas');
+      toast.error('Email ou senha incorretos. Verifique e tente novamente.');
     } finally {
       setLoading(false);
     }

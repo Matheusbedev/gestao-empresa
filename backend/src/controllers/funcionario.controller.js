@@ -63,8 +63,8 @@ exports.criar = async (req, res) => {
     const funcionario = await prisma.funcionario.create({ data });
     res.status(201).json(funcionario);
   } catch (err) {
-    if (err.code === 'P2002') return res.status(400).json({ error: 'CPF ou email já cadastrado' });
-    res.status(500).json({ error: 'Erro ao criar funcionário' });
+    if (err.code === 'P2002') return res.status(400).json({ error: 'CPF ou e-mail já cadastrado no sistema.' });
+    res.status(500).json({ error: 'Não foi possível cadastrar o funcionário. Tente novamente.' });
   }
 };
 

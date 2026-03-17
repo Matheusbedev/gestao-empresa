@@ -14,12 +14,12 @@ exports.login = async (req, res) => {
   try {
     const usuario = await prisma.usuario.findUnique({ where: { email } });
     if (!usuario || !usuario.ativo) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+      return res.status(401).json({ error: 'Email ou senha incorretos.' });
     }
 
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
     if (!senhaValida) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+      return res.status(401).json({ error: 'Email ou senha incorretos.' });
     }
 
     const token = jwt.sign(
@@ -53,7 +53,7 @@ exports.register = async (req, res) => {
   const { nome, email, senha, role } = req.body;
   try {
     const existe = await prisma.usuario.findUnique({ where: { email } });
-    if (existe) return res.status(400).json({ error: 'Email já cadastrado' });
+    if (existe) return res.status(400).json({ error: 'Este e-mail já está cadastrado no sistema.' });
 
     const senhaHash = await bcrypt.hash(senha, 10);
     const usuario = await prisma.usuario.create({
