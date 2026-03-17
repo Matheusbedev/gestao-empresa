@@ -13,6 +13,8 @@ const faltaRoutes = require('./routes/falta.routes');
 const folhaRoutes = require('./routes/folha.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const relatorioRoutes = require('./routes/relatorio.routes');
+const financeiroRoutes = require('./routes/financeiro.routes');
+const relatorioFinanceiroRoutes = require('./routes/relatorioFinanceiro.routes');
 
 const app = express();
 
@@ -59,6 +61,8 @@ app.use('/api/faltas', faltaRoutes);
 app.use('/api/folhas', folhaRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/relatorios', relatorioRoutes);
+app.use('/api/financeiro', financeiroRoutes);
+app.use('/api/relatorios/financeiro', relatorioFinanceiroRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 

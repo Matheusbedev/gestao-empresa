@@ -139,3 +139,50 @@ enum StatusFolha {
   PROCESSADA
   PAGA
 }
+
+// ── Módulo Financeiro ──────────────────────────────────────────
+
+model Conta {
+  id          String      @id @default(uuid())
+  descricao   String
+  valor       Decimal     @db.Decimal(10, 2)
+  vencimento  DateTime    @db.Date
+  categoria   String      @default("Outros")
+  tipo        TipoConta   @default(DESPESA)
+  status      StatusConta @default(PENDENTE)
+  lembrete    Boolean     @default(false)
+  lembreteAntecedencia Int @default(3) // dias antes
+  observacao  String?
+  pagoEm      DateTime?
+  criadoEm    DateTime    @default(now())
+  atualizadoEm DateTime   @updatedAt
+
+  @@map("contas")
+}
+
+model Receita {
+  id          String   @id @default(uuid())
+  descricao   String
+  valor       Decimal  @db.Decimal(10, 2)
+  data        DateTime @db.Date
+  categoria   String   @default("Outros")
+  origem      String?
+  observacao  String?
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("receitas")
+}
+
+enum TipoConta {
+  DESPESA
+  INVESTIMENTO
+  IMPOSTO
+}
+
+enum StatusConta {
+  PENDENTE
+  PAGA
+  VENCIDA
+  CANCELADA
+}
