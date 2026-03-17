@@ -1,5 +1,6 @@
 'use client';
 import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { X, Loader2, Clock, AlertCircle } from 'lucide-react';
@@ -8,13 +9,20 @@ interface Props {
   open: boolean;
   onClose: () => void;
   funcionarios: any[];
+  funcionarioPreSelecionado?: any;
   onSave: () => void;
 }
 
-export default function PontoManualModal({ open, onClose, funcionarios, onSave }: Props) {
-  const { register, handleSubmit, reset, watch, formState: { isSubmitting, errors } } = useForm();
+export default function PontoManualModal({ open, onClose, funcionarios, funcionarioPreSelecionado, onSave }: Props) {
+  const { register, handleSubmit, reset, watch, setValue, formState: { isSubmitting, errors } } = useForm();
   const entrada = watch('entrada');
   const saida = watch('saida');
+
+  useEffect(() => {
+    if (open && funcionarioPreSelecionado) {
+      setValue('funcionarioId', funcionarioPreSelecionado.id);
+    }
+  }, [open, funcionarioPreSelecionado]);
 
   const onSubmit = async (data: any) => {
     if (data.entrada && data.saida && data.saida <= data.entrada) {

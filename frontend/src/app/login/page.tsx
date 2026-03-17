@@ -96,7 +96,7 @@ export default function LoginPage() {
             <p className="text-slate-500 text-xs mb-2">Desenvolvido por</p>
             <p className="text-white font-semibold text-sm">Matheus Augusto</p>
             <div className="flex flex-wrap gap-4 mt-2">
-              <span className="text-slate-400 text-xs">📱 (43) 99555-144</span>
+              <span className="text-slate-400 text-xs">📱 (43) 999555-144</span>
               <span className="text-slate-400 text-xs">✉️ dev.matheusaugustoo@gmail.com</span>
               <span className="text-slate-400 text-xs">📸 @dev.matheuss</span>
             </div>

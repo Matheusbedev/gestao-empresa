@@ -7,6 +7,7 @@ import { Plus, Search, Edit2, Trash2, Eye, Filter, Loader2, Users, UserCheck, Us
 import Link from 'next/link';
 import clsx from 'clsx';
 import FuncionarioModal from '@/components/FuncionarioModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 function ConfirmModal({ open, nome, onConfirm, onCancel }: { open: boolean; nome: string; onConfirm: () => void; onCancel: () => void }) {
   if (!open) return null;
@@ -47,6 +48,8 @@ export default function FuncionariosPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<any>(null);
   const [confirmDesativar, setConfirmDesativar] = useState<any>(null);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   const carregar = async () => {
     setLoading(true);
@@ -195,10 +198,12 @@ export default function FuncionariosPage() {
                           className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-600 transition-colors" title="Editar">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => setConfirmDesativar(f)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors" title="Desativar">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {isAdmin && (
+                          <button onClick={() => setConfirmDesativar(f)}
+                            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors" title="Desativar">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

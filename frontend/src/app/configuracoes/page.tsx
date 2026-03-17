@@ -259,7 +259,7 @@ export default function ConfiguracoesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               { icon: User, label: 'Nome', value: 'Matheus Augusto' },
-              { icon: Phone, label: 'WhatsApp', value: '(43) 99555-144' },
+              { icon: Phone, label: 'WhatsApp', value: '(43) 999555-144' },
               { icon: Mail, label: 'E-mail', value: 'dev.matheusaugustoo@gmail.com' },
               { icon: Instagram, label: 'Instagram', value: '@dev.matheuss', href: 'https://instagram.com/dev.matheuss' },
             ].map(({ icon: Icon, label, value, href }) => (

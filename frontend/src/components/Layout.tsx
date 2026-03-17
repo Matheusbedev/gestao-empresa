@@ -112,15 +112,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{user?.nome}</p>
-              <p className="text-xs text-gray-400 truncate">{user?.role}</p>
+              <p className="text-xs text-gray-400 truncate">{user?.role === 'ADMIN' ? 'Administrador' : 'Gestor'}</p>
             </div>
             <button onClick={logout} title="Sair"
               className="text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100">
               <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="text-center text-xs text-gray-300 dark:text-gray-700 mt-2">dev.matheusaugustoo@gmail.com</p>
-        </div>
+          <p className="text-center text-xs text-gray-300 dark:text-gray-700 mt-2">dev.matheusaugustoo@gmail.com</p>        </div>
       </aside>
 
       {/* Main */}
@@ -151,7 +150,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="hidden md:block">
               <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">{user?.nome}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{user?.role}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{user?.role === 'ADMIN' ? 'Administrador' : 'Gestor'}</p>
             </div>
           </div>
         </header>
@@ -169,7 +168,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               className="text-blue-500 hover:text-blue-600 font-semibold transition-colors">
               Matheus Augusto
             </a>
-            {' '}· (43) 99555-144 · dev.matheusaugustoo@gmail.com
+            {' '}· (43) 999555-144 · dev.matheusaugustoo@gmail.com
           </p>
         </footer>
       </div>
