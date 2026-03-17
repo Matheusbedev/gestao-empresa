@@ -144,7 +144,14 @@ exports.resumoMensal = async (req, res) => {
     });
 
     const diasUteis = eachDayOfInterval({ start: inicio, end: fim }).filter(d => !isWeekend(d));
-    const pontoMap = Object.fromEntries(pontos.map(p => [format(new Date(p.data), 'yyyy-MM-dd'), p]));
+    // Usar UTC para mapear datas do banco (evita drift de timezone)
+    const pontoMap = Object.fromEntries(
+      pontos.map(p => {
+        const d = new Date(p.data);
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+        return [key, p];
+      })
+    );
 
     let totalHoras = 0, totalExtras50 = 0, totalExtras100 = 0, totalExtras = 0;
 
@@ -215,33 +222,43 @@ exports.baterPonto = async (req, res) => {
   }
 };
 
+// Converte string "yyyy-MM-ddTHH:mm:ss" para Date tratando como UTC
+// (evita que o Node interprete como local e o banco salve com offset errado)
+function parseHorario(isoStr) {
+  if (!isoStr) return null;
+  // Força interpretação UTC adicionando Z se não tiver offset
+  if (!isoStr.endsWith('Z') && !isoStr.includes('+')) {
+    return new Date(isoStr + 'Z');
+  }
+  return new Date(isoStr);
+}
+
 exports.registroManual = async (req, res) => {
   try {
     const { funcionarioId, data, entrada, saidaAlmoco, retornoAlmoco, saida, observacao } = req.body;
 
-    // Parsear data como local (evita problema de timezone UTC)
-    const [anoD, mesD, diaD] = data.split('-').map(Number);
-    const dataLocal = new Date(anoD, mesD - 1, diaD, 0, 0, 0);
-    const dataStr = data; // já está no formato yyyy-MM-dd
+    // Data do ponto: usar UTC meia-noite para evitar drift de timezone
+    const dataUTC = new Date(data + 'T00:00:00Z');
+    const dataStr = data; // yyyy-MM-dd
 
     const pontoData = {
       funcionarioId,
-      data: dataLocal,
+      data: dataUTC,
       observacao: observacao || null,
     };
 
-    if (entrada)       pontoData.entrada       = new Date(entrada);
-    if (saidaAlmoco)   pontoData.saidaAlmoco   = new Date(saidaAlmoco);
-    if (retornoAlmoco) pontoData.retornoAlmoco = new Date(retornoAlmoco);
+    if (entrada)       pontoData.entrada       = parseHorario(entrada);
+    if (saidaAlmoco)   pontoData.saidaAlmoco   = parseHorario(saidaAlmoco);
+    if (retornoAlmoco) pontoData.retornoAlmoco = parseHorario(retornoAlmoco);
     if (saida) {
-      pontoData.saida = new Date(saida);
+      pontoData.saida = parseHorario(saida);
       const { horasTrabalhadas, horasExtras } = calcularHoras(pontoData, 8, dataStr);
       pontoData.horasTrabalhadas = horasTrabalhadas;
       pontoData.horasExtras = horasExtras;
     }
 
     const ponto = await prisma.ponto.upsert({
-      where: { funcionarioId_data: { funcionarioId, data: dataLocal } },
+      where: { funcionarioId_data: { funcionarioId, data: dataUTC } },
       update: pontoData,
       create: pontoData,
     });
@@ -256,14 +273,16 @@ exports.registroManual = async (req, res) => {
 exports.atualizar = async (req, res) => {
   try {
     const data = { ...req.body };
-    if (data.entrada) data.entrada = new Date(data.entrada);
-    if (data.saida) data.saida = new Date(data.saida);
-    if (data.saidaAlmoco) data.saidaAlmoco = new Date(data.saidaAlmoco);
-    if (data.retornoAlmoco) data.retornoAlmoco = new Date(data.retornoAlmoco);
+    if (data.entrada)       data.entrada       = parseHorario(data.entrada);
+    if (data.saida)         data.saida         = parseHorario(data.saida);
+    if (data.saidaAlmoco)   data.saidaAlmoco   = parseHorario(data.saidaAlmoco);
+    if (data.retornoAlmoco) data.retornoAlmoco = parseHorario(data.retornoAlmoco);
 
     if (data.entrada && data.saida) {
       const pontoExistente = await prisma.ponto.findUnique({ where: { id: req.params.id } });
-      const dataStr = pontoExistente ? format(new Date(pontoExistente.data), 'yyyy-MM-dd') : null;
+      const dataStr = pontoExistente
+        ? (() => { const d = new Date(pontoExistente.data); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; })()
+        : null;
       const { horasTrabalhadas, horasExtras } = calcularHoras(data, 8, dataStr);
       data.horasTrabalhadas = horasTrabalhadas;
       data.horasExtras = horasExtras;

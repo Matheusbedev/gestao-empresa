@@ -25,10 +25,15 @@ function fmtH(h: number) {
 
 function fmtTime(dt: string | null | undefined) {
   if (!dt) return '';
-  try { return format(new Date(dt), 'HH:mm'); } catch { return ''; }
+  try {
+    const d = new Date(dt);
+    // Exibir em UTC para evitar conversão de timezone (-3h no Brasil)
+    return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`;
+  } catch { return ''; }
 }
 
 // Converte "HH:MM" de hora + data "yyyy-MM-dd" em ISO string sem problema de timezone
+// Sem o 'Z' no final — o backend vai adicionar Z para forçar UTC
 function toDateTime(data: string, hora: string) {
   if (!hora) return undefined;
   return `${data}T${hora}:00`;
