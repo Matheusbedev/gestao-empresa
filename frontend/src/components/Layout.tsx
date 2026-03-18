@@ -72,7 +72,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const currentPage = allItems.find(n => pathname.startsWith(n.href))?.label || '';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f4f5f7] dark:bg-[#0c0e13]">
+    <div className="flex h-screen overflow-hidden bg-[#f0f0f5] dark:bg-[#0b0d14]">
       {sidebarOpen && (
         <div className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)} />
@@ -81,18 +81,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Sidebar ── */}
       <aside className={clsx(
         'fixed inset-y-0 left-0 z-30 w-[220px] flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto select-none',
-        'bg-[#0f1117] border-r border-white/[0.04]',
+        'border-r border-white/[0.04]',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      )}>
+      )}
+        style={{ background: 'linear-gradient(180deg, #0e0b1e 0%, #100d20 60%, #0c0a18 100%)' }}>
+
         {/* Logo */}
-        <div className="flex items-center gap-3 px-4 h-14 border-b border-white/[0.05] flex-shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0"
-            style={{ boxShadow: '0 0 12px rgb(59 130 246 / 0.6)' }}>
+        <div className="flex items-center gap-3 px-4 h-14 border-b border-white/[0.06] flex-shrink-0">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', boxShadow: '0 0 14px rgb(124 58 237 / 0.6)' }}>
             <Briefcase className="w-3.5 h-3.5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-white text-[13px] leading-none">RH System</p>
-            <p className="text-[10px] text-blue-400/70 mt-0.5 font-medium">Enterprise</p>
+            <p className="text-[10px] text-violet-400/70 mt-0.5 font-medium">Enterprise</p>
           </div>
           <button onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-600 hover:text-gray-400 p-1 rounded-lg transition-colors">
@@ -115,10 +117,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       className={clsx(
                         'flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-150',
                         active
-                          ? 'bg-blue-600 text-white'
+                          ? 'text-white'
                           : 'text-gray-500 hover:bg-white/5 hover:text-gray-200'
                       )}
-                      style={active ? { boxShadow: '0 2px 8px rgb(37 99 235 / 0.45)' } : {}}>
+                      style={active ? {
+                        background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                        boxShadow: '0 2px 10px rgb(124 58 237 / 0.5)',
+                      } : {}}>
                       <Icon className="w-[15px] h-[15px] flex-shrink-0" />
                       <span className="flex-1 truncate">{label}</span>
                       {active && <ChevronRight className="w-3 h-3 opacity-50 flex-shrink-0" />}
@@ -133,7 +138,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* User */}
         <div className="p-2.5 border-t border-white/[0.05] flex-shrink-0">
           <div className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-default">
-            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
               {user?.nome?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -153,7 +159,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Topbar */}
-        <header className="h-14 flex items-center gap-3 px-4 sm:px-6 flex-shrink-0 bg-white dark:bg-[#13181f] border-b border-gray-100 dark:border-white/[0.05]"
+        <header className="h-14 flex items-center gap-3 px-4 sm:px-6 flex-shrink-0 bg-white dark:bg-[#10121c] border-b border-gray-100 dark:border-white/[0.05]"
           style={{ boxShadow: '0 1px 0 rgb(0 0 0 / 0.04)' }}>
           <button onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
@@ -169,7 +175,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex-1" />
 
           {hora && (
-            <span className="hidden sm:block text-xs font-mono text-gray-400 dark:text-gray-500 tabular-nums">
+            <span className="hidden sm:block text-xs font-mono text-gray-400 dark:text-gray-500 tabular-nums bg-gray-50 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-gray-100 dark:border-white/[0.06]">
               {hora}
             </span>
           )}
@@ -183,7 +189,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
 
           <div className="flex items-center gap-2.5 pl-3 border-l border-gray-100 dark:border-white/[0.06]">
-            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-[11px] font-bold">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
               {user?.nome?.charAt(0).toUpperCase()}
             </div>
             <div className="hidden md:block">
@@ -199,11 +206,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Footer */}
-        <footer className="h-9 flex items-center justify-center border-t border-gray-100 dark:border-white/[0.04] bg-white dark:bg-[#13181f] flex-shrink-0">
+        <footer className="h-9 flex items-center justify-center border-t border-gray-100 dark:border-white/[0.04] bg-white dark:bg-[#10121c] flex-shrink-0">
           <p className="text-[11px] text-gray-400 dark:text-gray-600">
             RH System · Dev{' '}
             <a href="https://instagram.com/dev.matheuss" target="_blank" rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-400 font-semibold transition-colors">
+              className="text-violet-500 hover:text-violet-400 font-semibold transition-colors">
               Matheus Augusto
             </a>
             {' '}· (43) 999555-144

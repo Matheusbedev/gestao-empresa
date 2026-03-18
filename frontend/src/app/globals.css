@@ -11,17 +11,17 @@
 @layer components {
   /* ── Cards ── */
   .card {
-    @apply bg-white dark:bg-[#13181f] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-6 transition-all duration-200;
+    @apply bg-white dark:bg-[#141720] rounded-2xl border border-gray-100 dark:border-white/[0.05] p-6 transition-all duration-200;
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.05), 0 1px 2px rgb(0 0 0 / 0.03);
   }
   .card-hover {
-    @apply card hover:shadow-md hover:-translate-y-0.5 cursor-default;
+    @apply card hover:shadow-lg hover:-translate-y-0.5 cursor-default;
   }
 
   /* ── Buttons ── */
   .btn-primary {
-    @apply inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.97] text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed text-sm;
-    box-shadow: 0 1px 3px rgb(37 99 235 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.1);
+    @apply inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 active:scale-[0.97] text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed text-sm;
+    box-shadow: 0 1px 3px rgb(124 58 237 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.1);
   }
   .btn-secondary {
     @apply inline-flex items-center gap-2 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 active:scale-[0.97] text-gray-700 dark:text-gray-300 font-semibold px-4 py-2.5 rounded-xl transition-all duration-150 border border-gray-200 dark:border-white/10 text-sm;
@@ -43,7 +43,7 @@
 
   /* ── Form ── */
   .input {
-    @apply w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1e2535] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm;
+    @apply w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1f2e] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm;
   }
   .label {
     @apply block text-[11px] font-bold text-gray-500 dark:text-gray-500 mb-1.5 uppercase tracking-widest;
@@ -81,7 +81,7 @@ select option {
 }
 .dark select option,
 .dark select {
-  background-color: #1e2535 !important;
+  background-color: #1a1f2e !important;
   color: #f1f5f9 !important;
 }
 .dark {
@@ -93,8 +93,8 @@ select option {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-.dark ::-webkit-scrollbar-thumb { background: #374151; }
-.dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+.dark ::-webkit-scrollbar-thumb { background: #2d3348; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #3d4460; }
 
 /* ── Animations ── */
 @keyframes fadeIn    { from { opacity: 0; }                               to { opacity: 1; } }
@@ -118,4 +118,9 @@ select option {
 .glass { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
 
 /* Gradient text */
-.gradient-text { background: linear-gradient(135deg, #3b82f6, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
