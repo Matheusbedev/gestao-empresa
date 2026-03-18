@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./config/swagger');
 const logger = require('./utils/logger');
 
 const authRoutes = require('./routes/auth.routes');
@@ -52,7 +51,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+if (process.env.NODE_ENV !== 'test') {
+  const swaggerSpec = require('./config/swagger');
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
 app.use('/api/auth', authRoutes);
 app.use('/api/funcionarios', funcionarioRoutes);

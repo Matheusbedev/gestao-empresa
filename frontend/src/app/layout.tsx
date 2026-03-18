@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
 
 export const metadata: Metadata = {
   title: 'RH System — Gestão de Pessoas',
@@ -14,13 +14,19 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100`}>
+      <body className={`${manrope.variable} font-sans`}>
         <AuthProvider>
           {children}
           <Toaster
             position="top-right"
             toastOptions={{
-              style: { borderRadius: '12px', fontSize: '13px', fontWeight: 600 },
+              style: {
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontWeight: 700,
+                background: '#0f172a',
+                color: '#f8fafc',
+              },
               success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
               error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
               duration: 3500,

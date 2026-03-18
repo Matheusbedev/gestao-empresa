@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Users, Clock, AlertCircle, DollarSign,
   FileText, LogOut, Menu, X, Sun, Moon, Settings,
-  ChevronRight, Briefcase, Wallet,
+  ChevronRight, Briefcase, Wallet, Loader2,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -46,7 +46,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [darkMode, setDarkMode] = useState(false);
   const [hora, setHora] = useState('');
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const router = useRouter();
+  const { user, logout, loading } = useAuth();
 
   useEffect(() => {
     const saved = localStorage.getItem('darkMode') === 'true';
@@ -71,8 +72,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const allItems = navGroups.flatMap(g => g.items);
   const currentPage = allItems.find(n => pathname.startsWith(n.href))?.label || '';
 
+  useEffect(() => {
+    if (!loading && !user) router.replace('/login');
+  }, [loading, user, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="card max-w-sm w-full text-center animate-scale-in">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-[var(--primary)]" />
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">Carregando ambiente</h2>
+          <p className="text-sm text-[var(--text-muted)] mt-1">Estamos validando suas permissoes.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f0f0f5] dark:bg-[#0b0d14]">
+    <div className="flex h-screen overflow-hidden app-shell-bg">
       {sidebarOpen && (
         <div className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)} />
@@ -81,20 +100,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Sidebar ── */}
       <aside className={clsx(
         'fixed inset-y-0 left-0 z-30 w-[220px] flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto select-none',
-        'border-r border-white/[0.04]',
+        'border-r border-[var(--panel-border)]/70',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       )}
-        style={{ background: 'linear-gradient(180deg, #0e0b1e 0%, #100d20 60%, #0c0a18 100%)' }}>
+        style={{ background: 'linear-gradient(180deg, #0b2239 0%, #0f2f4a 30%, #132335 100%)' }}>
 
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 h-14 border-b border-white/[0.06] flex-shrink-0">
           <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', boxShadow: '0 0 14px rgb(124 58 237 / 0.6)' }}>
+            style={{ background: 'linear-gradient(135deg, #22d3ee, #2dd4bf)', boxShadow: '0 0 18px rgb(34 211 238 / 0.45)' }}>
             <Briefcase className="w-3.5 h-3.5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-white text-[13px] leading-none">RH System</p>
-            <p className="text-[10px] text-violet-400/70 mt-0.5 font-medium">Enterprise</p>
+            <p className="text-[10px] text-cyan-200/80 mt-0.5 font-medium">Painel Operacional</p>
           </div>
           <button onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-600 hover:text-gray-400 p-1 rounded-lg transition-colors">
@@ -106,7 +125,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 px-2.5 py-4 overflow-y-auto space-y-5">
           {navGroups.map(group => (
             <div key={group.label}>
-              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-2.5 mb-1.5">
+              <p className="text-[10px] font-bold text-sky-200/45 uppercase tracking-widest px-2.5 mb-1.5">
                 {group.label}
               </p>
               <div className="space-y-0.5">
@@ -118,11 +137,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         'flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-150',
                         active
                           ? 'text-white'
-                          : 'text-gray-500 hover:bg-white/5 hover:text-gray-200'
+                          : 'text-sky-100/70 hover:bg-white/10 hover:text-white'
                       )}
                       style={active ? {
-                        background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                        boxShadow: '0 2px 10px rgb(124 58 237 / 0.5)',
+                        background: 'linear-gradient(135deg, #0ea5e9, #14b8a6)',
+                        boxShadow: '0 3px 14px rgb(14 165 233 / 0.4)',
                       } : {}}>
                       <Icon className="w-[15px] h-[15px] flex-shrink-0" />
                       <span className="flex-1 truncate">{label}</span>
@@ -139,12 +158,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="p-2.5 border-t border-white/[0.05] flex-shrink-0">
           <div className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-default">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+              style={{ background: 'linear-gradient(135deg, #0ea5e9, #2dd4bf)' }}>
               {user?.nome?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-bold text-white truncate leading-none">{user?.nome}</p>
-              <p className="text-[10px] text-gray-600 mt-0.5">
+              <p className="text-[10px] text-sky-100/55 mt-0.5">
                 {user?.role === 'ADMIN' ? 'Administrador' : 'Gestor'}
               </p>
             </div>
@@ -159,43 +178,43 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Topbar */}
-        <header className="h-14 flex items-center gap-3 px-4 sm:px-6 flex-shrink-0 bg-white dark:bg-[#10121c] border-b border-gray-100 dark:border-white/[0.05]"
-          style={{ boxShadow: '0 1px 0 rgb(0 0 0 / 0.04)' }}>
+        <header className="h-14 flex items-center gap-3 px-4 sm:px-6 flex-shrink-0 bg-[var(--panel)]/95 border-b border-[var(--panel-border)] backdrop-blur-xl"
+          style={{ boxShadow: '0 8px 22px rgb(15 23 42 / 0.05)' }}>
           <button onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+            className="lg:hidden p-2 rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition-colors">
             <Menu className="w-5 h-5" />
           </button>
 
           <div className="hidden sm:flex items-center gap-2 text-sm">
-            <span className="text-gray-400 dark:text-gray-600 text-xs">RH System</span>
-            <ChevronRight className="w-3 h-3 text-gray-300 dark:text-gray-700" />
-            <span className="font-semibold text-gray-800 dark:text-gray-200">{currentPage}</span>
+            <span className="text-[var(--text-muted)] text-xs">RH System</span>
+            <ChevronRight className="w-3 h-3 text-[var(--text-soft)]" />
+            <span className="font-semibold text-[var(--text-primary)]">{currentPage}</span>
           </div>
 
           <div className="flex-1" />
 
           {hora && (
-            <span className="hidden sm:block text-xs font-mono text-gray-400 dark:text-gray-500 tabular-nums bg-gray-50 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-gray-100 dark:border-white/[0.06]">
+            <span className="hidden sm:block text-xs font-mono text-[var(--text-muted)] tabular-nums bg-[var(--surface-2)] px-2.5 py-1 rounded-lg border border-[var(--panel-border)]">
               {hora}
             </span>
           )}
 
           <button onClick={toggleDark}
-            className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+            className="p-2 rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition-colors"
             title={darkMode ? 'Modo claro' : 'Modo escuro'}>
             {darkMode
               ? <Sun className="w-4 h-4 text-amber-400" />
               : <Moon className="w-4 h-4" />}
           </button>
 
-          <div className="flex items-center gap-2.5 pl-3 border-l border-gray-100 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2.5 pl-3 border-l border-[var(--panel-border)]">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+              style={{ background: 'linear-gradient(135deg, #0ea5e9, #14b8a6)' }}>
               {user?.nome?.charAt(0).toUpperCase()}
             </div>
             <div className="hidden md:block">
-              <p className="text-[12px] font-bold text-gray-900 dark:text-white leading-none">{user?.nome}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{user?.role === 'ADMIN' ? 'Administrador' : 'Gestor'}</p>
+              <p className="text-[12px] font-bold text-[var(--text-primary)] leading-none">{user?.nome}</p>
+              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{user?.role === 'ADMIN' ? 'Administrador' : 'Gestor'}</p>
             </div>
           </div>
         </header>
@@ -206,14 +225,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Footer */}
-        <footer className="h-9 flex items-center justify-center border-t border-gray-100 dark:border-white/[0.04] bg-white dark:bg-[#10121c] flex-shrink-0">
-          <p className="text-[11px] text-gray-400 dark:text-gray-600">
-            RH System · Dev{' '}
-            <a href="https://instagram.com/dev.matheuss" target="_blank" rel="noopener noreferrer"
-              className="text-violet-500 hover:text-violet-400 font-semibold transition-colors">
-              Matheus Augusto
-            </a>
-            {' '}· (43) 999555-144
+        <footer className="h-9 flex items-center justify-center border-t border-[var(--panel-border)] bg-[var(--panel)]/95 backdrop-blur-xl flex-shrink-0">
+          <p className="text-[11px] text-[var(--text-muted)]">
+            RH System · Painel profissional de RH
           </p>
         </footer>
       </div>

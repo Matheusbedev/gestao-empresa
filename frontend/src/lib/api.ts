@@ -14,10 +14,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status;
+    const requestUrl = err.config?.url || '';
+    const isLoginRequest = requestUrl.includes('/api/auth/login');
+    const isOnLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
+
+    if (status === 401 && !isLoginRequest) {
       Cookies.remove('token');
-      window.location.href = '/login';
+
+      if (!isOnLoginPage) {
+        window.location.href = '/login';
+      }
     }
+
     return Promise.reject(err);
   }
 );

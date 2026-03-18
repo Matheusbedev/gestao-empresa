@@ -2,10 +2,11 @@
 import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import {
   Users, UserCheck, UserX, Clock, AlertCircle, DollarSign,
-  TrendingUp, ArrowUpRight, ArrowRight, RefreshCw
+  TrendingUp, ArrowUpRight, ArrowRight, RefreshCw, Briefcase, CalendarDays
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
@@ -17,7 +18,7 @@ interface DashboardData {
   cards: {
     totalFuncionarios: number; funcionariosAtivos: number;
     presentesHoje: number; ausentesHoje: number;
-    faltasMes: number; horasExtrasMes: number; custoFolha: number;
+    faltasHoje: number; faltasMes: number; horasExtrasMes: number; custoFolha: number;
   };
   gastosPorMes: { mes: string; total: number }[];
   faltasPorFuncionario: { nome: string; faltas: number }[];
@@ -56,15 +57,20 @@ function StatCard({ title, value, icon: Icon, color, bg, sub, href }: any) {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async (refresh = false) => {
     if (refresh) setRefreshing(true);
+    setError(null);
     try {
       const res = await api.get('/api/dashboard');
       setData(res.data);
+    } catch {
+      setError('Nao foi possivel carregar o dashboard agora.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -74,6 +80,11 @@ export default function DashboardPage() {
   useEffect(() => { load(); }, []);
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+  const hasChartData = (data?.gastosPorMes?.length || 0) > 0;
+  const hasFaltasRank = (data?.faltasPorFuncionario?.length || 0) > 0;
+
+  const hour = new Date().getHours();
+  const saudacao = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
   if (loading) return (
     <Layout>
@@ -90,19 +101,38 @@ export default function DashboardPage() {
     <Layout>
       <div className="space-y-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="page-title">Dashboard</h1>
             <p className="page-subtitle">
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
+            <p className="text-sm mt-2 text-[var(--text-muted)]">
+              {saudacao}, <span className="font-bold text-[var(--text-primary)]">{user?.nome}</span>. Aqui esta o resumo da operacao de RH.
+            </p>
           </div>
-          <button onClick={() => load(true)} disabled={refreshing}
-            className="btn-secondary text-sm py-2 px-3">
-            <RefreshCw className={clsx('w-3.5 h-3.5', refreshing && 'animate-spin')} />
-            <span className="hidden sm:inline">Atualizar</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <Link href="/funcionarios" className="btn-secondary text-sm py-2 px-3">
+              <Briefcase className="w-3.5 h-3.5" /> Acoes
+            </Link>
+            <button onClick={() => load(true)} disabled={refreshing}
+              className="btn-secondary text-sm py-2 px-3">
+              <RefreshCw className={clsx('w-3.5 h-3.5', refreshing && 'animate-spin')} />
+              <span className="hidden sm:inline">Atualizar</span>
+            </button>
+          </div>
         </div>
+
+        {error && (
+          <div className="card border-red-200 dark:border-red-900/30 animate-slide-up">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>
+              <button onClick={() => load(true)} className="btn-danger text-xs py-2 px-3 w-fit">
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 stagger">
@@ -111,15 +141,17 @@ export default function DashboardPage() {
           <StatCard title="Funcionários Ativos" value={data?.cards.funcionariosAtivos}
             icon={UserCheck} color="text-emerald-600" bg="bg-emerald-50 dark:bg-emerald-900/20" href="/funcionarios" />
           <StatCard title="Presentes Hoje" value={data?.cards.presentesHoje}
-            icon={Clock} color="text-violet-600" bg="bg-violet-50 dark:bg-violet-900/20"
+            icon={Clock} color="text-cyan-600" bg="bg-cyan-50 dark:bg-cyan-900/20"
             sub={`${data?.cards.ausentesHoje} ausentes`} href="/ponto" />
           <StatCard title="Custo da Folha" value={fmt(data?.cards.custoFolha || 0)}
             icon={DollarSign} color="text-orange-600" bg="bg-orange-50 dark:bg-orange-900/20" href="/folha" />
         </div>
 
-        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 stagger">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 stagger">
           <StatCard title="Ausentes Hoje" value={data?.cards.ausentesHoje}
             icon={UserX} color="text-red-600" bg="bg-red-50 dark:bg-red-900/20" href="/ponto" />
+          <StatCard title="Faltas Hoje" value={data?.cards.faltasHoje || 0}
+            icon={CalendarDays} color="text-rose-600" bg="bg-rose-50 dark:bg-rose-900/20" href="/faltas" />
           <StatCard title="Faltas no Mês" value={data?.cards.faltasMes}
             icon={AlertCircle} color="text-amber-600" bg="bg-amber-50 dark:bg-amber-900/20" href="/faltas" />
           <StatCard title="Horas Extras (Mês)" value={`${(data?.cards.horasExtrasMes || 0).toFixed(1)}h`}
@@ -139,23 +171,29 @@ export default function DashboardPage() {
                 Ver folha <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
-            <ResponsiveContainer width="100%" height={210}>
-              <AreaChart data={data?.gastosPorMes} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-                <defs>
-                  <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.12} />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}
-                  tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip content={<CustomTooltip fmt={fmt} />} />
-                <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2.5}
-                  fill="url(#gradBlue)" dot={false} activeDot={{ r: 5, fill: '#3b82f6', strokeWidth: 0 }} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {hasChartData ? (
+              <ResponsiveContainer width="100%" height={210}>
+                <AreaChart data={data?.gastosPorMes} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                  <defs>
+                    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.16} />
+                      <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
+                    tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip content={<CustomTooltip fmt={fmt} />} />
+                  <Area type="monotone" dataKey="total" stroke="#0ea5e9" strokeWidth={2.5}
+                    fill="url(#gradBlue)" dot={false} activeDot={{ r: 5, fill: '#0ea5e9', strokeWidth: 0 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[210px] rounded-xl border border-dashed border-slate-300 flex items-center justify-center text-sm text-slate-500">
+                Ainda nao ha dados suficientes para o grafico.
+              </div>
+            )}
           </div>
 
           {/* Bar chart */}
@@ -169,15 +207,21 @@ export default function DashboardPage() {
                 Ver faltas <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
-            <ResponsiveContainer width="100%" height={210}>
-              <BarChart data={data?.faltasPorFuncionario} margin={{ top: 5, right: 5, bottom: 0, left: -25 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis dataKey="nome" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="faltas" fill="#f97316" radius={[6, 6, 0, 0]} maxBarSize={36} />
-              </BarChart>
-            </ResponsiveContainer>
+            {hasFaltasRank ? (
+              <ResponsiveContainer width="100%" height={210}>
+                <BarChart data={data?.faltasPorFuncionario} margin={{ top: 5, right: 5, bottom: 0, left: -25 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                  <XAxis dataKey="nome" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="faltas" fill="#f97316" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[210px] rounded-xl border border-dashed border-slate-300 flex items-center justify-center text-sm text-slate-500">
+                Sem faltas registradas no periodo.
+              </div>
+            )}
           </div>
         </div>
 
