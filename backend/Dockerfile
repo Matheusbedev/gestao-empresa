@@ -10,7 +10,8 @@ RUN npm install
 COPY . .
 
 RUN npx prisma generate
+RUN chmod +x start.sh
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma db push && node prisma/seed.js ; node src/server.js"]
+CMD ["sh", "start.sh"]
