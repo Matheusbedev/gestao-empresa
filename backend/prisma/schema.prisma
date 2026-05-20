@@ -46,6 +46,9 @@ model Funcionario {
   faltas        Falta[]
   folhas        FolhaPagamento[]
 
+  @@index([status])
+  @@index([departamento])
+  @@index([criadoEm])
   @@map("funcionarios")
 }
 
@@ -67,6 +70,8 @@ model Ponto {
   funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
 
   @@unique([funcionarioId, data])
+  @@index([data])
+  @@index([tipo])
   @@map("pontos")
 }
 
@@ -82,6 +87,8 @@ model Falta {
 
   funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
 
+  @@index([data])
+  @@index([tipo])
   @@map("faltas")
 }
 
@@ -108,6 +115,8 @@ model FolhaPagamento {
   funcionario     Funcionario @relation(fields: [funcionarioId], references: [id])
 
   @@unique([funcionarioId, mes, ano])
+  @@index([status])
+  @@index([mes, ano])
   @@map("folha_pagamento")
 }
 
@@ -159,6 +168,9 @@ model Conta {
   criadoEm    DateTime    @default(now())
   atualizadoEm DateTime   @updatedAt
 
+  @@index([status])
+  @@index([vencimento])
+  @@index([categoria])
   @@map("contas")
 }
 
@@ -173,6 +185,8 @@ model Receita {
   criadoEm    DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
+  @@index([data])
+  @@index([categoria])
   @@map("receitas")
 }
 
