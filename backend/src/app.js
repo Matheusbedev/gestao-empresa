@@ -14,6 +14,7 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const relatorioRoutes = require('./routes/relatorio.routes');
 const financeiroRoutes = require('./routes/financeiro.routes');
 const relatorioFinanceiroRoutes = require('./routes/relatorioFinanceiro.routes');
+const relatoriosAdvancedRoutes = require('./routes/relatorios.advanced.routes');
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/relatorios', relatorioRoutes);
 app.use('/api/financeiro', financeiroRoutes);
 app.use('/api/relatorios/financeiro', relatorioFinanceiroRoutes);
+app.use('/api/relatorios/avancado', relatoriosAdvancedRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
