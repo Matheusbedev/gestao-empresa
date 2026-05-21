@@ -15,6 +15,8 @@ const relatorioRoutes = require('./routes/relatorio.routes');
 const financeiroRoutes = require('./routes/financeiro.routes');
 const relatorioFinanceiroRoutes = require('./routes/relatorioFinanceiro.routes');
 const relatoriosAdvancedRoutes = require('./routes/relatorios.advanced.routes');
+const anotacoesRoutes = require('./routes/anotacoes.routes');
+const descontosRoutes = require('./routes/descontos.routes');
 
 const app = express();
 
@@ -67,6 +69,8 @@ app.use('/api/relatorios', relatorioRoutes);
 app.use('/api/financeiro', financeiroRoutes);
 app.use('/api/relatorios/financeiro', relatorioFinanceiroRoutes);
 app.use('/api/relatorios/avancado', relatoriosAdvancedRoutes);
+app.use('/api/anotacoes', anotacoesRoutes);
+app.use('/api/descontos', descontosRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 

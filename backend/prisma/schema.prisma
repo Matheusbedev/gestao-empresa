@@ -202,3 +202,77 @@ enum StatusConta {
   VENCIDA
   CANCELADA
 }
+
+// ── Anotações Internas ──────────────────────────────────────────
+
+model Anotacao {
+  id            String    @id @default(uuid())
+  funcionarioId String
+  titulo        String
+  conteudo      String    @db.Text
+  tipo          TipoAnotacao @default(GERAL)
+  prioridade    Prioridade @default(NORMAL)
+  criadoPor     String
+  criadoEm      DateTime  @default(now())
+  atualizadoEm  DateTime  @updatedAt
+
+  @@index([funcionarioId])
+  @@index([tipo])
+  @@index([prioridade])
+  @@map("anotacoes")
+}
+
+// ── Descontos e Observações ─────────────────────────────────────
+
+model Desconto {
+  id            String    @id @default(uuid())
+  funcionarioId String
+  mes           Int
+  ano           Int
+  valor         Decimal   @db.Decimal(10, 2)
+  motivo        String
+  observacao    String?   @db.Text
+  tipo          TipoDesconto @default(OUTRO)
+  status        StatusDesconto @default(PENDENTE)
+  criadoPor     String
+  aprovadoPor   String?
+  criadoEm      DateTime  @default(now())
+  aprovadoEm    DateTime?
+  atualizadoEm  DateTime  @updatedAt
+
+  @@unique([funcionarioId, mes, ano, motivo])
+  @@index([status])
+  @@index([mes, ano])
+  @@map("descontos")
+}
+
+enum TipoAnotacao {
+  GERAL
+  AVISO
+  DISCIPLINA
+  ELOGIO
+  REUNIAO
+  TAREFA
+}
+
+enum Prioridade {
+  BAIXA
+  NORMAL
+  ALTA
+  URGENTE
+}
+
+enum TipoDesconto {
+  FALTA
+  ATRASO
+  ADIANTAMENTO
+  EMPRESTIMO
+  OUTRO
+}
+
+enum StatusDesconto {
+  PENDENTE
+  APROVADO
+  REJEITADO
+  APLICADO
+}
