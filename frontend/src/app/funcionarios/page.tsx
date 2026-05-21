@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Search, Edit2, Trash2, Eye, Filter, Loader2, Users, UserCheck, UserX, RotateCcw, AlertTriangle, Palmtree } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Filter, Loader2, Users, UserCheck, UserX, RotateCcw, AlertTriangle, Palmtree, FileText, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
 import FuncionarioModal from '@/components/FuncionarioModal';
+import AnotacoesModal from '@/components/AnotacoesModal';
+import DescontosModal from '@/components/DescontosModal';
 import { useAuth } from '@/contexts/AuthContext';
 
 function ConfirmModal({ open, titulo, mensagem, confirmLabel, confirmClass, onConfirm, onCancel, icon: Icon }: any) {
@@ -48,6 +50,9 @@ export default function FuncionariosPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<any>(null);
   const [confirm, setConfirm] = useState<any>(null);
+  const [anotacoesOpen, setAnotacoesOpen] = useState(false);
+  const [descontosOpen, setDescontosOpen] = useState(false);
+  const [selectedFuncionario, setSelectedFuncionario] = useState<any>(null);
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
 
@@ -239,6 +244,14 @@ export default function FuncionariosPage() {
                           className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-600 transition-colors" title="Editar">
                           <Edit2 className="w-4 h-4" />
                         </button>
+                        <button onClick={() => { setSelectedFuncionario(f); setAnotacoesOpen(true); }}
+                          className="p-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-600 transition-colors" title="Anotações">
+                          <FileText className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => { setSelectedFuncionario(f); setDescontosOpen(true); }}
+                          className="p-1.5 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-400 hover:text-orange-600 transition-colors" title="Descontos">
+                          <DollarSign className="w-4 h-4" />
+                        </button>
                         {isAdmin && f.status === 'INATIVO' && (
                           <button onClick={() => handleReativar(f)}
                             className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-gray-400 hover:text-emerald-600 transition-colors" title="Reativar">
@@ -290,6 +303,20 @@ export default function FuncionariosPage() {
 
       <FuncionarioModal open={modalOpen} onClose={() => setModalOpen(false)}
         funcionario={editando} onSave={() => { setModalOpen(false); carregar(); }} />
+
+      <AnotacoesModal
+        funcionarioId={selectedFuncionario?.id || ''}
+        isOpen={anotacoesOpen}
+        onClose={() => setAnotacoesOpen(false)}
+      />
+
+      <DescontosModal
+        funcionarioId={selectedFuncionario?.id || ''}
+        mes={new Date().getMonth() + 1}
+        ano={new Date().getFullYear()}
+        isOpen={descontosOpen}
+        onClose={() => setDescontosOpen(false)}
+      />
 
       <ConfirmModal
         open={!!confirm}
